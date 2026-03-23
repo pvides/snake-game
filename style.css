@@ -1,0 +1,44 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #1a1a2e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
+  color: #eee;
+}
+h1 { margin-bottom: 8px; font-size: 28px; color: #00ff88; text-shadow: 0 0 10px #00ff8855; }
+#score-bar { margin-bottom: 12px; font-size: 18px; display: flex; gap: 30px; }
+#score-bar span { color: #00ff88; }
+canvas {
+  border: 2px solid #00ff88;
+  border-radius: 4px;
+  box-shadow: 0 0 20px #00ff8833;
+  background: #0f0f23;
+}
+#controls {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 16px;
+}
+#controls label { color: #aaa; }
+#controls select {
+  background: #16213e;
+  color: #00ff88;
+  border: 1px solid #00ff88;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 15px;
+  cursor: pointer;
+  outline: none;
+}
+#message {
+  margin-top: 10px;
+  font-size: 16px;
+  height: 24px;
+  color: #aaa;
+}
