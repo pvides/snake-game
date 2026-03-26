@@ -22,6 +22,10 @@ function draw() {
       var tailPos=snake.length-1-i;if(tailPos<spikeCount)drawSpikes(cx2,cy2,i,snake);
     }
   });
+  // HUD
+  ctx.textAlign='left';ctx.font='11px Segoe UI';
+  ctx.fillStyle='#2ecc71';ctx.fillText('Rupees: '+rupees,5,canvas.height-18);
+  ctx.fillStyle='#ff6b6b';ctx.fillText('Lives: '+extraLives,5,canvas.height-5);
   if(gameOver){ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#ff4757';ctx.font='bold 36px Segoe UI';ctx.textAlign='center';ctx.fillText('Game Over',canvas.width/2,canvas.height/2-10);ctx.fillStyle='#eee';ctx.font='18px Segoe UI';ctx.fillText('Score: '+score,canvas.width/2,canvas.height/2+24);}
 }
 
@@ -44,7 +48,7 @@ function step() {
     if(hitWombat){if(goldCount<=1)return die();goldCount-=2;score=goldCount;scoreEl.textContent=score;var kl=1+Math.max(1,goldCount);if(snake.length>kl)snake.length=kl;}
     if(hitRaccoon){if(goldCount<=0)return die();goldCount--;score=goldCount;scoreEl.textContent=score;var kl2=1+Math.max(1,goldCount);if(snake.length>kl2)snake.length=kl2;}
   }
-  if(spikeCount>0){for(var i=enemies.length-1;i>=0;i--){var e=enemies[i];for(var s=snake.length-1;s>=Math.max(1,snake.length-spikeCount);s--){if(snake[s]&&snake[s].x===e.x&&snake[s].y===e.y){var killed=enemies.splice(i,1)[0];killCount++;if(killCount>=4){killCount=0;vacuumSuck();}var rd2=killed.type==='wombat'?4110:6870;setTimeout(function(kt){return function(){if(gameOver)return;var pos;while(true){pos={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*ROWS)};if(Math.abs(pos.x-snake[0].x)+Math.abs(pos.y-snake[0].y)>=5&&!snake.some(function(s2){return s2.x===pos.x&&s2.y===pos.y;}))break;}enemies.push({x:pos.x,y:pos.y,dir:DIRS[Math.floor(Math.random()*4)],type:kt});if(currentScreen==='main')draw();};}(killed.type),rd2);break;}}}}
+  if(spikeCount>0){for(var i=enemies.length-1;i>=0;i--){var e=enemies[i];for(var s=snake.length-1;s>=Math.max(1,snake.length-spikeCount);s--){if(snake[s]&&snake[s].x===e.x&&snake[s].y===e.y){var killed=enemies.splice(i,1)[0];killCount++;if(killCount>=4){killCount=0;vacuumSuck();}awardRupees(killed.type);var rd2=killed.type==='wombat'?4110:6870;setTimeout(function(kt){return function(){if(gameOver)return;var pos;while(true){pos={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*ROWS)};if(Math.abs(pos.x-snake[0].x)+Math.abs(pos.y-snake[0].y)>=5&&!snake.some(function(s2){return s2.x===pos.x&&s2.y===pos.y;}))break;}enemies.push({x:pos.x,y:pos.y,dir:DIRS[Math.floor(Math.random()*4)],type:kt});if(currentScreen==='main')draw();};}(killed.type),rd2);break;}}}}
   moveBullets();
   if(shooting){fireBullets();if(Date.now()>=shootEnd){shooting=false;bullets=[];}}
   snake.unshift(head);
@@ -56,9 +60,45 @@ function step() {
   draw();
 }
 
+var deathChoicePending=false;
+
 function die() {
   if(creativeMode)return;
+  if(extraLives>0){
+    deathChoicePending=true;
+    clearInterval(tickInterval);
+    drawDeathChoice();
+    return;
+  }
   gameOver=true;running=false;currentScreen='main';draw();msgEl.textContent='Press R or Space to restart';
+}
+
+function drawDeathChoice(){
+  ctx.fillStyle='rgba(0,0,0,0.75)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.textAlign='center';
+  ctx.fillStyle='#ff4757';ctx.font='bold 28px Segoe UI';ctx.fillText('You Died!',canvas.width/2,canvas.height/2-50);
+  ctx.fillStyle='#eee';ctx.font='18px Segoe UI';ctx.fillText('You have '+extraLives+' extra '+(extraLives===1?'life':'lives'),canvas.width/2,canvas.height/2-15);
+  ctx.fillStyle='#2ecc71';ctx.font='bold 20px Segoe UI';ctx.fillText('[Y] Use extra life',canvas.width/2,canvas.height/2+25);
+  ctx.fillStyle='#ff6b6b';ctx.font='bold 20px Segoe UI';ctx.fillText('[N] Game over',canvas.width/2,canvas.height/2+60);
+}
+
+function useExtraLife(){
+  deathChoicePending=false;
+  extraLives--;
+  if(currentScreen==='capy5'){
+    capy5HP=Math.min(5,capy5HP+3);
+  }else{
+    for(var el=0;el<3;el++)snake.push({x:snake[snake.length-1].x,y:snake[snake.length-1].y});
+  }
+  msgEl.textContent='Extra life used! ('+extraLives+' left)';
+  setTimeout(function(){if(!gameOver)msgEl.textContent='';},1500);
+  resumeCurrentScreen();
+}
+
+function declineExtraLife(){
+  deathChoicePending=false;
+  gameOver=true;running=false;currentScreen='main';draw();msgEl.textContent='Press R or Space to restart';
+}
 }
 
 var KEY_MAP={ArrowUp:{x:0,y:-1},w:{x:0,y:-1},W:{x:0,y:-1},ArrowDown:{x:0,y:1},s:{x:0,y:1},S:{x:0,y:1},ArrowLeft:{x:-1,y:0},a:{x:-1,y:0},A:{x:-1,y:0},ArrowRight:{x:1,y:0},d:{x:1,y:0},D:{x:1,y:0}};
@@ -68,6 +108,27 @@ var deleteMode2=false;
 
 document.addEventListener('keydown',function(e){
   if(cutsceneActive){if(e.key==='x'||e.key==='X')skipCutscene();return;}
+  if(deathChoicePending){
+    if(e.key==='y'||e.key==='Y'){useExtraLife();return;}
+    if(e.key==='n'||e.key==='N'){declineExtraLife();return;}
+    return;
+  }
+  if(slothShopOpen){
+    if(e.key==='Alt'){e.preventDefault();slothShopOpen=false;resumeCurrentScreen();return;}
+    if(e.key==='Enter'){
+      e.preventDefault();
+      if(slothShopSelection===1)buyFromSloth(1);
+      else if(slothShopSelection===2)buyFromSloth(2);
+      else if(slothShopSelection===3)buyFromSloth(3);
+      return;
+    }
+    if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){slothShopSelection=Math.max(1,slothShopSelection-1);drawSlothShop();return;}
+    if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){slothShopSelection=Math.min(3,slothShopSelection+1);drawSlothShop();return;}
+    if(e.key==='1'){slothShopSelection=1;drawSlothShop();return;}
+    if(e.key==='2'){slothShopSelection=2;drawSlothShop();return;}
+    if(e.key==='3'){slothShopSelection=3;drawSlothShop();return;}
+    return;
+  }
   if(menuActive)return;
   if(saveMenuOpen){
     if(e.key===' '){e.preventDefault();saveMenuOpen=false;deleteMode2=false;resumeCurrentScreen();return;}
@@ -99,10 +160,35 @@ document.addEventListener('keydown',function(e){
     if(e.key==='Escape'){clearInterval(tickInterval);returnToMainGame();return;}
     if(e.key==='='){saveGame();return;}if(e.key==='-'){saveMenuOpen=true;deleteMode2=false;clearInterval(tickInterval);showSaveMenu();return;}
     if(e.key==='Enter'&&goldCount>0){e.preventDefault();goldCount--;score=goldCount;scoreEl.textContent=score;clearInterval(tickInterval);enterCapy2();return;}
-    if(e.key==='Shift'&&shieldUses>0){shieldActive5=true;shieldUses--;if(shieldUses<=0)shieldRechargeEnd=Date.now()+2000;setTimeout(function(){shieldActive5=false;},500);return;}
-    if(e.key==='/'&&swordUses>=3&&!swordSpinActive){e.preventDefault();swordSpinActive=true;swordSpinEnd=Date.now()+400;swordUses-=3;if(swordUses<=0)swordRechargeEnd=Date.now()+4000;if(capy5Player){for(var ii=capy5Enemies.length-1;ii>=0;ii--){var ex=capy5Enemies[ii];if(Math.abs(ex.x-capy5Player.x)<=2&&Math.abs(ex.y-capy5Player.y)<=2){ex.hp--;if(ex.hp<=0)capy5Enemies.splice(ii,1);}}if(capy5Boss&&Math.abs(capy5Boss.x-capy5Player.x)<=3&&Math.abs(capy5Boss.y-capy5Player.y)<=3){capy5Boss.armor--;if(capy5Boss.armor<=0)capy5Boss=null;}}return;}
+    if(e.key==='CapsLock'&&shieldUses>0){e.preventDefault();shieldActive5=true;shieldUses--;if(shieldUses<=0)shieldRechargeEnd=Date.now()+2000;setTimeout(function(){shieldActive5=false;},500);return;}
+    if(e.key==='Shift'&&swordUses>=3&&!swordSpinActive){e.preventDefault();swordSpinActive=true;swordSpinEnd=Date.now()+400;swordUses-=3;if(swordUses<=0)swordRechargeEnd=Date.now()+4000;if(capy5Player){for(var ii=capy5Enemies.length-1;ii>=0;ii--){var ex=capy5Enemies[ii];if(Math.abs(ex.x-capy5Player.x)<=2&&Math.abs(ex.y-capy5Player.y)<=2){ex.hp--;if(ex.hp<=0){capy5Enemies.splice(ii,1);rupees+=1;}}}if(capy5Boss&&Math.abs(capy5Boss.x-capy5Player.x)<=3&&Math.abs(capy5Boss.y-capy5Player.y)<=3){capy5Boss.armor--;if(capy5Boss.armor<=0){capy5Boss=null;rupees+=3;}}}return;}
     if(e.key==='Control'&&swordUses>0&&!swordSpinActive){swordSpinActive=true;swordSpinEnd=Date.now()+300;swordUses--;if(swordUses<=0)swordRechargeEnd=Date.now()+4000;return;}
     var mapped4=KEY_MAP[e.key];if(mapped4){e.preventDefault();nextDir=mapped4;if(!capy5Running)capy5Running=true;capy5MoveQueued=true;}return;
+  }
+  if(currentScreen==='capy7'){
+    if(e.key==='Escape'){clearInterval(tickInterval);returnToMainGame();return;}
+    if(e.key==='='){saveGame();return;}if(e.key==='-'){saveMenuOpen=true;deleteMode2=false;clearInterval(tickInterval);showSaveMenu();return;}
+    if(capy7CutsceneActive){if(e.key==='x'||e.key==='X'){clearInterval(tickInterval);returnToMainGame();}return;}
+    var mapped6=KEY_MAP[e.key];
+    if(mapped6&&capy7Player){
+      e.preventDefault();
+      if(!capy7Running)capy7Running=true;
+      var nx7=capy7Player.x+mapped6.x,ny7=capy7Player.y+mapped6.y;
+      if(nx7>=0&&nx7<COLS&&ny7>=0&&ny7<C7_ROWS){capy7Player.x=nx7;capy7Player.y=ny7;}
+    }
+    return;
+  }
+  if(currentScreen==='capy6'){
+    if(e.key==='Escape'){clearInterval(tickInterval);returnToMainGame();return;}
+    if(e.key==='='){saveGame();return;}if(e.key==='-'){saveMenuOpen=true;deleteMode2=false;clearInterval(tickInterval);showSaveMenu();return;}
+    if(capy6CutsceneActive){if(e.key==='x'||e.key==='X'){capy6CutsceneActive=false;startCapy6Snake();}return;}
+    var mapped7=KEY_MAP[e.key];if(mapped7){e.preventDefault();if(mapped7.x!==-dir.x||mapped7.y!==-dir.y)nextDir=mapped7;if(!capy6Running)capy6Running=true;}return;
+  }
+  if(currentScreen==='capy8'){
+    if(e.key==='Escape'){clearInterval(tickInterval);returnToMainGame();return;}
+    if(e.key==='='){saveGame();return;}if(e.key==='-'){saveMenuOpen=true;deleteMode2=false;clearInterval(tickInterval);showSaveMenu();return;}
+    if(capy8CutsceneActive){if(e.key==='x'||e.key==='X'){capy8CutsceneActive=false;startCapy8Snake();}return;}
+    var mapped8=KEY_MAP[e.key];if(mapped8){e.preventDefault();if(mapped8.x!==-dir.x||mapped8.y!==-dir.y)nextDir=mapped8;if(!capy8Running)capy8Running=true;}return;
   }
   var mapped5=KEY_MAP[e.key];
   if(mapped5){e.preventDefault();if(mapped5.x!==-dir.x||mapped5.y!==-dir.y)nextDir=mapped5;if(!running&&!gameOver){running=true;msgEl.textContent='';}if(creativeMode)creativeMoveQueued=true;}
@@ -110,7 +196,7 @@ document.addEventListener('keydown',function(e){
   if(e.key==='-'){saveMenuOpen=true;deleteMode2=false;clearInterval(tickInterval);showSaveMenu();}
   if(e.key==='Enter'&&!gameOver&&running){e.preventDefault();if(goldCount>0){goldCount--;score=goldCount;scoreEl.textContent=score;enterCapy2();}}
   if((e.key==='r'||e.key==='R')&&gameOver)init();
-  if(creativeMode){if(e.key==='2'){clearInterval(tickInterval);enterCapy2();return;}if(e.key==='3'){clearInterval(tickInterval);enterCapy3();return;}if(e.key==='4'){clearInterval(tickInterval);enterCapy4();return;}if(e.key==='5'){clearInterval(tickInterval);enterCapy5();return;}}
+  if(creativeMode){if(e.key==='2'){clearInterval(tickInterval);enterCapy2();return;}if(e.key==='3'){clearInterval(tickInterval);enterCapy3();return;}if(e.key==='4'){clearInterval(tickInterval);enterCapy4();return;}if(e.key==='5'){clearInterval(tickInterval);enterCapy5();return;}if(e.key==='6'){clearInterval(tickInterval);enterCapy6();return;}if(e.key==='7'){clearInterval(tickInterval);enterCapy7();return;}if(e.key==='8'){clearInterval(tickInterval);enterCapy8();return;}}
   if(e.key==='Tab'){e.preventDefault();clearInterval(tickInterval);if(goldOrangeTimer)clearTimeout(goldOrangeTimer);if(beaverTimer)clearTimeout(beaverTimer);if(beaverLogInterval)clearInterval(beaverLogInterval);if(autoSaveInterval)clearInterval(autoSaveInterval);if(stormTimer)clearTimeout(stormTimer);menuActive=true;currentScreen='main';drawMenu();}
 });
 
@@ -122,6 +208,9 @@ function resumeCurrentScreen() {
   else if(currentScreen==='capy3'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy3,parseInt(speedEl.value));drawCapy3();}
   else if(currentScreen==='capy4'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy4,parseInt(speedEl.value));drawCapy4();}
   else if(currentScreen==='capy5'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy5,parseInt(speedEl.value));drawCapy5();}
+  else if(currentScreen==='capy7'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy7,120);drawCapy7();}
+  else if(currentScreen==='capy6'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy6,100);drawCapy6Game();}
+  else if(currentScreen==='capy8'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy8,100);drawCapy8Game();}
   else{draw();restartTimer();}
 }
 

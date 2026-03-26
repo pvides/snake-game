@@ -20,6 +20,8 @@ const MAX_SAVES = 13;
 var spikeCount = 0;
 var creativeMode = false;
 var creativeMoveQueued = false;
+var rupees = 0;
+var extraLives = 0;
 
 function init() {
   var mid = Math.floor(ROWS / 2);
@@ -29,6 +31,8 @@ function init() {
   score = 0;
   goldCount = 0;
   spikeCount = 0;
+  rupees = 0;
+  extraLives = 0;
   gameOver = false;
   running = false;
   scoreEl.textContent = score;
@@ -122,7 +126,7 @@ function spawnStorm() {
   var sx, attempts=0;
   do {
     sx=Math.floor(Math.random()*(COLS-1)); attempts++;
-  } while (attempts<50&&snake.some(function(s){for(var dx=0;dx<2;dx++)for(var dy=0;dy<=6;dy++)if(s.x===sx+dx&&s.y===dy)return true;return false;}));
+  } while (attempts<50&&(function(){var hx=snake[0].x,hy=snake[0].y;for(var dx=0;dx<2;dx++)for(var dy=0;dy<=6;dy++){if(Math.abs(sx+dx-hx)<=3&&Math.abs(dy-hy)<=3)return true;}return false;})());
   storms.push({x:sx,y:0});
   setTimeout(function(){storms=storms.filter(function(s){return s.x!==sx||s.y!==0;});if(!gameOver&&currentScreen==='main')draw();},3000);
   draw();
@@ -160,7 +164,7 @@ function applyStormDamageToNonSnake(zones) {
   for (var i=enemies.length-1;i>=0;i--) {
     if (zones.some(function(z){return z.x===enemies[i].x&&z.y===enemies[i].y;})) {
       var killed=enemies.splice(i,1)[0];
-      killCount++;if(killCount>=4){killCount=0;vacuumSuck();}
+      killCount++;if(killCount>=4){killCount=0;vacuumSuck();}awardRupees(killed.type);
       var rd=killed.type==='wombat'?4110:6870;
       setTimeout(function(kt){return function rE(){if(gameOver)return;var pos;while(true){pos={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*ROWS)};if(Math.abs(pos.x-snake[0].x)+Math.abs(pos.y-snake[0].y)>=5&&!snake.some(function(s2){return s2.x===pos.x&&s2.y===pos.y;}))break;}enemies.push({x:pos.x,y:pos.y,dir:DIRS[Math.floor(Math.random()*4)],type:kt});if(currentScreen==='main')draw();};}(killed.type),rd);
     }
@@ -189,7 +193,7 @@ function moveBullets() {
   bullets=bullets.filter(function(b){
     var hitIdx=enemies.findIndex(function(e){return e.x===b.x&&e.y===b.y;});
     if (hitIdx!==-1) {
-      var killed=enemies.splice(hitIdx,1)[0];killCount++;if(killCount>=4){killCount=0;vacuumSuck();}
+      var killed=enemies.splice(hitIdx,1)[0];killCount++;if(killCount>=4){killCount=0;vacuumSuck();}awardRupees(killed.type);
       var rd=killed.type==='wombat'?4110:6870;
       setTimeout(function(kt){return function(){if(gameOver)return;var pos;while(true){pos={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*ROWS)};if(Math.abs(pos.x-snake[0].x)+Math.abs(pos.y-snake[0].y)>=5&&!snake.some(function(s){return s.x===pos.x&&s.y===pos.y;}))break;}enemies.push({x:pos.x,y:pos.y,dir:DIRS[Math.floor(Math.random()*4)],type:kt});if(currentScreen==='main')draw();};}(killed.type),rd);
       return false;
@@ -211,6 +215,11 @@ function placeWanderer() {
     wanderer={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*ROWS)};
     if (!snake.some(function(s){return s.x===wanderer.x&&s.y===wanderer.y;})&&!(food.x===wanderer.x&&food.y===wanderer.y)) break;
   }
+}
+
+function awardRupees(type){
+  if(type==='raccoon')rupees+=1;
+  else if(type==='wombat')rupees+=2;
 }
 
 var DIRS=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];
@@ -278,7 +287,7 @@ function moveBeaver() {
       var dx=Math.sign(nearest.x-beaver.x),dy=Math.sign(nearest.y-beaver.y);
       if(Math.abs(nearest.x-beaver.x)>=Math.abs(nearest.y-beaver.y))beaver.x+=dx;else beaver.y+=dy;
       var cIdx=enemies.findIndex(function(e){return e.x===beaver.x&&e.y===beaver.y;});
-      if(cIdx!==-1){var caught=enemies.splice(cIdx,1)[0];killCount++;if(killCount>=4){killCount=0;vacuumSuck();}
+      if(cIdx!==-1){var caught=enemies.splice(cIdx,1)[0];killCount++;if(killCount>=4){killCount=0;vacuumSuck();}awardRupees(caught.type);
         setTimeout(function(ct){return function(){if(gameOver)return;var p;while(true){p={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*ROWS)};if(Math.abs(p.x-snake[0].x)+Math.abs(p.y-snake[0].y)>=5&&!snake.some(function(s){return s.x===p.x&&s.y===p.y;}))break;}enemies.push({x:p.x,y:p.y,dir:DIRS[Math.floor(Math.random()*4)],type:ct});if(currentScreen==='main')draw();};}(caught.type),7000);
       }
     }
@@ -297,7 +306,7 @@ function checkBeaverLogHits() {
     }
     if(l.gold){
       var hIdx=enemies.findIndex(function(e){return e.x===l.x&&e.y===l.y;});
-      if(hIdx!==-1){var killed=enemies.splice(hIdx,1)[0];killCount++;if(killCount>=4){killCount=0;vacuumSuck();}
+      if(hIdx!==-1){var killed=enemies.splice(hIdx,1)[0];killCount++;if(killCount>=4){killCount=0;vacuumSuck();}awardRupees(killed.type);
         var rd=killed.type==='wombat'?4110:6870;
         setTimeout(function(kt){return function(){if(gameOver)return;var pos;while(true){pos={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*ROWS)};if(Math.abs(pos.x-snake[0].x)+Math.abs(pos.y-snake[0].y)>=5&&!snake.some(function(s){return s.x===pos.x&&s.y===pos.y;}))break;}enemies.push({x:pos.x,y:pos.y,dir:DIRS[Math.floor(Math.random()*4)],type:kt});if(currentScreen==='main')draw();};}(killed.type),rd);
         return false;
