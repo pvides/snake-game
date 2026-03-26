@@ -2,12 +2,52 @@
 body {
   background: #1a1a2e;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
   height: 100vh;
   font-family: 'Segoe UI', sans-serif;
   color: #eee;
+  gap: 40px;
+}
+#instructions {
+  width: 180px;
+  padding: 16px;
+  background: rgba(15,15,35,0.8);
+  border: 1px solid #16213e;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #888;
+  line-height: 1.7;
+  flex-shrink: 0;
+}
+#instructions h2 {
+  color: #00ff88;
+  font-size: 15px;
+  margin-bottom: 10px;
+  text-shadow: 0 0 6px #00ff8844;
+}
+#instructions kbd {
+  background: #16213e;
+  color: #00ff88;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 11px;
+}
+#instructions .section {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #16213e;
+}
+#instructions .section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+#game-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 h1 { margin-bottom: 8px; font-size: 28px; color: #00ff88; text-shadow: 0 0 10px #00ff8855; }
 #score-bar { margin-bottom: 12px; font-size: 18px; display: flex; gap: 30px; }
@@ -18,15 +58,15 @@ canvas {
   box-shadow: 0 0 20px #00ff8833;
   background: #0f0f23;
 }
-#controls {
+#gamecontrols {
   margin-top: 12px;
   display: flex;
   align-items: center;
   gap: 12px;
   font-size: 16px;
 }
-#controls label { color: #aaa; }
-#controls select {
+#gamecontrols label { color: #aaa; }
+#gamecontrols select {
   background: #16213e;
   color: #00ff88;
   border: 1px solid #00ff88;
@@ -36,7 +76,7 @@ canvas {
   cursor: pointer;
   outline: none;
 }
-#message {
+#gameMessage {
   margin-top: 10px;
   font-size: 16px;
   height: 24px;

@@ -3,26 +3,67 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Snake Game</title>
+<title>CrawlingCapys</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>🐍 Snake</h1>
-<div id="score-bar">
-  Score: <span id="score">0</span>
-  &nbsp;|&nbsp; Best: <span id="best">0</span>
+<div id="instructions">
+  <h2>Controls</h2>
+  <div class="section">
+    <kbd>Arrow keys</kbd> or <kbd>WASD</kbd> Move<br>
+    <kbd>R</kbd> Restart (game over)<br>
+    <kbd>Tab</kbd> Main menu
+  </div>
+  <div class="section">
+    <kbd>Enter</kbd> Sacrifice gold capybara to teleport<br>
+    <kbd>ESC</kbd> Return from landscape
+  </div>
+  <div class="section">
+    <kbd>=</kbd> Save game<br>
+    <kbd>-</kbd> Open saves<br>
+    In saves menu:<br>
+    <kbd>1-9</kbd> Load save<br>
+    <kbd>X</kbd> Delete mode<br>
+    <kbd>Space</kbd> Resume
+  </div>
+  <div class="section">
+    Orange = gold capybara<br>
+    Capybara = add segment<br>
+    Gold orange = shoot<br>
+    Raccoon = lose 1 gold<br>
+    Wombat = lose 2 gold<br>
+    Beaver = help or harm<br>
+    Rain = kills anything<br>
+    Cloud = teleport to Capy 3
+  </div>
+  <div class="section">
+    <b>Landscapes</b><br>
+    Capy 2 = oranges and enemies<br>
+    Capy 3 = rocks and rain<br>
+    Capy 4 = frogs and storms<br>
+    Capy 5 = space
+  </div>
 </div>
-<canvas id="game" width="400" height="400"></canvas>
-<div id="controls">
-  <label for="speed">Speed:</label>
-  <select id="speed">
+<div id="game-area">
+<h1>CrawlingCapys</h1>
+<div id="score-bar">
+  Score: <span id="scoreDisplay">0</span>
+  &nbsp;|&nbsp; Best: <span id="bestDisplay">0</span>
+</div>
+<canvas id="gameCanvas" width="400" height="400"></canvas>
+<div id="gamecontrols">
+  <label for="gameSpeed">Speed:</label>
+  <select id="gameSpeed">
     <option value="150">Slow</option>
     <option value="100" selected>Normal</option>
     <option value="65">Fast</option>
     <option value="40">Insane</option>
   </select>
 </div>
-<div id="message">Press any arrow key or WASD to start</div>
-<script src="snake.js"></script>
+<div id="gameMessage">Press any arrow key or WASD to start</div>
+</div>
+<script src="game.js"></script>
+<script src="game_core.js"></script>
+<script src="game_part2.js"></script>
 </body>
 </html>
