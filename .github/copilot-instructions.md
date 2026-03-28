@@ -56,6 +56,27 @@ Beavers spawn on timers (11 or 13 seconds). Types: `'hostile'` (fires red logs),
 - **Color palette**: Dark backgrounds (#0a0a1a to #1a1a2e), green accent (#00ff88), gold (#ffd700), purple (#9b59b6). Each landscape has its own tint.
 - **Grid system**: 20x20 grid cells on a 400x400 canvas (`GRID=20`, `COLS=20`, `ROWS=20`).
 
+## Pre-commit and Pre-push Checklist
+
+Before every commit and push, verify the following:
+
+1. **Secret scanning** — Search all files for passwords, tokens, API keys, credentials, email addresses, private keys, and auth-related strings. Use patterns like: `password`, `secret`, `token`, `api_key`, `Bearer`, `credential`, `private_key`, `BEGIN.*PRIVATE`, `ssh-rsa`, `access_token`, `client_secret`.
+2. **No personal info** — Ensure no personal email addresses, usernames (beyond git config), or account identifiers are hardcoded in source files.
+3. **No .env or config leaks** — Verify no environment variables, database URLs, or service credentials appear in committed files.
+4. **Brace balance** — Verify `{` and `}` counts match in all JS files. A mismatch causes silent failure.
+5. **localStorage keys** — Only use the established keys: `crawlingCapysGames` (save data), `crawlingCapysGamble` (daily gamble count). Do not store sensitive data in localStorage.
+6. **Documentation** — If changes affect game mechanics, landscapes, controls, economy, sloth types, or architecture, update the relevant sections in:
+   - `README.md` — Keep the features list, controls table, and file descriptions current.
+   - `docs/architecture.md` — Keep screen management, economy tables, sloth types, data storage, and file responsibilities accurate.
+   - `.github/copilot-instructions.md` — Update the game mechanics section if rules change.
+
+## Tooling
+
+- **Gitleaks** is installed at `~/gitleaks/gitleaks.exe` with Git hooks configured:
+  - **Pre-commit hook**: Scans staged changes for secrets before every commit. Blocks commit if secrets found.
+  - **Pre-push hook**: Scans entire repo for secrets before every push. Blocks push if secrets found.
+  - Hooks are in `.git/hooks/pre-commit` and `.git/hooks/pre-push`.
+
 ## Game Mechanics — Detailed Rules
 
 ### Snake
