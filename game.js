@@ -25,6 +25,13 @@ var extraLives = 0;
 var ownedPortals = [];
 var happyBeavers = [];
 var happyBeaverCount = 0;
+var totalRaccoonKills = 0;
+var totalWombatKills = 0;
+var capy5Beaten = false;
+var capy7Beaten = false;
+var claimedQuests = [];
+var dailyOrangesEaten = 0;
+var dailyShootsActivated = 0;
 
 function init() {
   var mid = Math.floor(ROWS / 2);
@@ -38,6 +45,13 @@ function init() {
   extraLives = 0;
   ownedPortals = [];
   happyBeaverCount = 0;
+  totalRaccoonKills = 0;
+  totalWombatKills = 0;
+  capy5Beaten = false;
+  capy7Beaten = false;
+  claimedQuests = [];
+  dailyOrangesEaten = 0;
+  dailyShootsActivated = 0;
   gameOver = false;
   running = false;
   scoreEl.textContent = score;
@@ -223,8 +237,8 @@ function placeWanderer() {
 }
 
 function awardRupees(type){
-  if(type==='raccoon')rupees+=1;
-  else if(type==='wombat')rupees+=2;
+  if(type==='raccoon'){rupees+=1;totalRaccoonKills++;}
+  else if(type==='wombat'){rupees+=2;totalWombatKills++;}
 }
 
 var DIRS=[{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}];

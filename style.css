@@ -57,6 +57,7 @@ canvas {
   border-radius: 4px;
   box-shadow: 0 0 20px #00ff8833;
   background: #0f0f23;
+  touch-action: none;
 }
 #gamecontrols {
   margin-top: 12px;
@@ -81,4 +82,104 @@ canvas {
   font-size: 16px;
   height: 24px;
   color: #aaa;
+}
+
+/* Mobile controls — hidden by default, shown on touch devices */
+#mobile-controls {
+  display: none;
+  width: 100%;
+  max-width: 400px;
+  margin-top: 12px;
+  flex-direction: column;
+  gap: 10px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.touch-device #mobile-controls { display: flex; }
+
+#mobile-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#dpad {
+  display: grid;
+  grid-template-areas:
+    ". up ."
+    "left down right";
+  grid-template-columns: 50px 50px 50px;
+  grid-template-rows: 50px 50px;
+  gap: 4px;
+}
+#btn-up    { grid-area: up; }
+#btn-left  { grid-area: left; }
+#btn-down  { grid-area: down; }
+#btn-right { grid-area: right; }
+
+.dpad-btn {
+  background: rgba(22,33,62,0.9);
+  color: #00ff88;
+  border: 1px solid #00ff8866;
+  border-radius: 8px;
+  font-size: 22px;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dpad-btn.active { background: #00ff8833; border-color: #00ff88; }
+
+#action-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.action-btn {
+  background: rgba(22,33,62,0.9);
+  color: #00ff88;
+  border: 1px solid #00ff8866;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: bold;
+  font-family: 'Segoe UI', sans-serif;
+  cursor: pointer;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  text-align: center;
+}
+.action-btn.active { background: #00ff8833; border-color: #00ff88; }
+
+#extra-btns {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+#extra-btns .action-btn {
+  padding: 8px 12px;
+  font-size: 12px;
+  min-width: 40px;
+}
+
+/* Responsive layout for phones */
+@media (max-width: 600px) {
+  body {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+    padding: 8px;
+    gap: 0;
+    touch-action: manipulation;
+  }
+  #instructions { display: none; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  #score-bar { font-size: 14px; margin-bottom: 6px; }
+  canvas { width: 100%; max-width: 100%; }
+  #gamecontrols { margin-top: 6px; }
+  #gameMessage { font-size: 13px; margin-top: 6px; height: auto; }
 }

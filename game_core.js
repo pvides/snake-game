@@ -54,8 +54,8 @@ function step() {
   if(shooting){fireBullets();if(Date.now()>=shootEnd){shooting=false;bullets=[];}}
   snake.unshift(head);
   applyVacuum();
-  if(goldOrange&&head.x===goldOrange.x&&head.y===goldOrange.y){goldOrange=null;shooting=true;shootEnd=Date.now()+8340;lastGoldOrangeEatTime=Date.now();scheduleGoldOrange();snake.pop();}
-  else if(head.x===food.x&&head.y===food.y){goldCount++;score=goldCount;scoreEl.textContent=score;if(score>best){best=score;bestEl.textContent=best;}placeFood();var threshold2=Math.floor(score/15);if(!creativeMode&&threshold2>lastEnemyThreshold){lastEnemyThreshold=threshold2;spawnEnemy();}snake.pop();tryTriggerStorm();}
+  if(goldOrange&&head.x===goldOrange.x&&head.y===goldOrange.y){goldOrange=null;shooting=true;shootEnd=Date.now()+8340;lastGoldOrangeEatTime=Date.now();scheduleGoldOrange();snake.pop();dailyShootsActivated++;}
+  else if(head.x===food.x&&head.y===food.y){goldCount++;score=goldCount;scoreEl.textContent=score;if(score>best){best=score;bestEl.textContent=best;}placeFood();var threshold2=Math.floor(score/15);if(!creativeMode&&threshold2>lastEnemyThreshold){lastEnemyThreshold=threshold2;spawnEnemy();}snake.pop();tryTriggerStorm();dailyOrangesEaten++;}
   else if(wanderer&&head.x===wanderer.x&&head.y===wanderer.y){wanderer=null;msgEl.textContent='Capybara caught! +1 segment';setTimeout(function(){if(!gameOver&&currentScreen==='main')msgEl.textContent='';},1000);setTimeout(function rWE(){if(gameOver)return;if(currentScreen!=='main'){setTimeout(rWE,1000);return;}placeWanderer();draw();},2170);}
   else{snake.pop();}
   draw();
@@ -186,6 +186,13 @@ document.addEventListener('keydown',function(e){
     if(e.key==='Alt'||e.key==='Escape'){scamShopOpen=false;resumeCurrentScreen();return;}
     return;
   }
+  if(questShopOpen){
+    if(e.key==='Alt'||e.key==='Escape'){questShopOpen=false;resumeCurrentScreen();return;}
+    if(e.key==='Enter'){e.preventDefault();claimQuest(questShopSelection-1);return;}
+    if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){questShopSelection=Math.max(1,questShopSelection-1);drawQuestShop();return;}
+    if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){questShopSelection=Math.min(QUESTS.length,questShopSelection+1);drawQuestShop();return;}
+    return;
+  }
   if(saveMenuOpen){
     if(e.key===' '){e.preventDefault();saveMenuOpen=false;deleteMode2=false;resumeCurrentScreen();return;}
     if(e.key==='x'||e.key==='X'){deleteMode2=true;showSaveMenu();return;}
@@ -264,7 +271,7 @@ document.addEventListener('keydown',function(e){
   if(e.key==='Enter'&&!gameOver&&running){e.preventDefault();if(goldCount>0){goldCount--;score=goldCount;scoreEl.textContent=score;enterCapy2();}}
   if((e.key==='r'||e.key==='R')&&gameOver)init();
   if(creativeMode){if(e.key==='2'){clearInterval(tickInterval);enterCapy2();return;}if(e.key==='3'){clearInterval(tickInterval);enterCapy3();return;}if(e.key==='4'){clearInterval(tickInterval);enterCapy4();return;}if(e.key==='5'){clearInterval(tickInterval);enterCapy5();return;}if(e.key==='6'){clearInterval(tickInterval);enterCapy6();return;}if(e.key==='7'){clearInterval(tickInterval);enterCapy7();return;}if(e.key==='8'){clearInterval(tickInterval);enterCapy8();return;}}
-  if(e.key==='Tab'){e.preventDefault();clearInterval(tickInterval);if(goldOrangeTimer)clearTimeout(goldOrangeTimer);if(beaverTimer)clearTimeout(beaverTimer);if(beaverLogInterval)clearInterval(beaverLogInterval);if(autoSaveInterval)clearInterval(autoSaveInterval);if(stormTimer)clearTimeout(stormTimer);cutsceneActive=false;deathChoicePending=false;slothShopOpen=false;saveMenuOpen=false;menuActive=true;currentScreen='main';drawMenu();}
+  if(e.key==='Tab'){e.preventDefault();clearInterval(tickInterval);if(goldOrangeTimer)clearTimeout(goldOrangeTimer);if(beaverTimer)clearTimeout(beaverTimer);if(beaverLogInterval)clearInterval(beaverLogInterval);if(autoSaveInterval)clearInterval(autoSaveInterval);if(stormTimer)clearTimeout(stormTimer);cutsceneActive=false;deathChoicePending=false;slothShopOpen=false;questShopOpen=false;saveMenuOpen=false;menuActive=true;currentScreen='main';drawMenu();}
 });
 
 speedEl.addEventListener('change',function(){restartTimer();});
@@ -272,7 +279,7 @@ speedEl.addEventListener('change',function(){restartTimer();});
 canvas.addEventListener('click',function(e){
   if(!saveMenuOpen&&!saveBrowseActive)return;
   var rect=canvas.getBoundingClientRect();
-  var my=e.clientY-rect.top;
+  var my=(e.clientY-rect.top)*(canvas.height/rect.height);
   var saves=getSavesList();
   for(var i=0;i<saves.length;i++){
     var sy=75+i*50;

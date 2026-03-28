@@ -86,14 +86,14 @@ function drawCapy2() {
 // === SAVE SYSTEM ===
 var currentGameId=null;
 function getAllGames(){return JSON.parse(localStorage.getItem('crawlingCapysGames')||'[]');}
-function saveAllGames(games){localStorage.setItem('crawlingCapysGames',JSON.stringify(games));}
+function saveAllGames(games){try{localStorage.setItem('crawlingCapysGames',JSON.stringify(games));}catch(e){msgEl.textContent='Save failed — storage full!';setTimeout(function(){if(!gameOver)msgEl.textContent='';},2000);}}
 function getCurrentGame(){var games=getAllGames();return games.find(function(g){return g.id===currentGameId;})||null;}
 
-function getGameState(){return{snake:JSON.parse(JSON.stringify(snake)),dir:{x:dir.x,y:dir.y},nextDir:{x:nextDir.x,y:nextDir.y},food:{x:food.x,y:food.y},score:score,goldCount:goldCount,wanderer:wanderer?{x:wanderer.x,y:wanderer.y}:null,enemies:JSON.parse(JSON.stringify(enemies)),lastEnemyThreshold:lastEnemyThreshold,running:running,killCount:killCount,spikeCount:spikeCount,rupees:rupees,extraLives:extraLives,ownedPortals:JSON.parse(JSON.stringify(ownedPortals)),happyBeaverCount:happyBeaverCount,currentScreen:currentScreen,timestamp:Date.now()};}
+function getGameState(){return{snake:JSON.parse(JSON.stringify(snake)),dir:{x:dir.x,y:dir.y},nextDir:{x:nextDir.x,y:nextDir.y},food:{x:food.x,y:food.y},score:score,goldCount:goldCount,wanderer:wanderer?{x:wanderer.x,y:wanderer.y}:null,enemies:JSON.parse(JSON.stringify(enemies)),lastEnemyThreshold:lastEnemyThreshold,running:running,killCount:killCount,spikeCount:spikeCount,rupees:rupees,extraLives:extraLives,ownedPortals:JSON.parse(JSON.stringify(ownedPortals)),happyBeaverCount:happyBeaverCount,totalRaccoonKills:totalRaccoonKills,totalWombatKills:totalWombatKills,capy5Beaten:capy5Beaten,capy7Beaten:capy7Beaten,claimedQuests:JSON.parse(JSON.stringify(claimedQuests)),dailyOrangesEaten:dailyOrangesEaten,dailyShootsActivated:dailyShootsActivated,currentScreen:currentScreen,timestamp:Date.now()};}
 
 function saveGame(){if(gameOver||!currentGameId)return;var state=getGameState();var games=getAllGames();var gm=games.find(function(g){return g.id===currentGameId;});if(!gm)return;gm.saves.unshift(state);if(gm.saves.length>MAX_SAVES)gm.saves.length=MAX_SAVES;saveAllGames(games);msgEl.textContent='Game saved! ('+gm.saves.length+'/'+MAX_SAVES+' slots)';setTimeout(function(){if(!gameOver)msgEl.textContent='';},1500);}
 
-function loadGame(slotIndex){var gm=getCurrentGame();if(!gm||slotIndex>=gm.saves.length)return;var state=gm.saves[slotIndex];clearInterval(tickInterval);if(goldOrangeTimer)clearTimeout(goldOrangeTimer);if(beaverTimer)clearTimeout(beaverTimer);if(beaverLogInterval)clearInterval(beaverLogInterval);if(autoSaveInterval)clearInterval(autoSaveInterval);snake=state.snake;dir=state.dir;nextDir=state.nextDir;food=state.food;score=state.score;goldCount=state.goldCount;wanderer=state.wanderer;if(!wanderer){setTimeout(function rWL(){if(gameOver)return;if(currentScreen!=='main'){setTimeout(rWL,1000);return;}placeWanderer();draw();},2170);}enemies=state.enemies;lastEnemyThreshold=state.lastEnemyThreshold;running=true;killCount=state.killCount;spikeCount=state.spikeCount||0;rupees=state.rupees||0;extraLives=state.extraLives||0;ownedPortals=state.ownedPortals||[];happyBeaverCount=state.happyBeaverCount||0;var savedScreen=state.currentScreen||'main';currentScreen='main';gameOver=false;menuActive=false;saveMenuOpen=false;cutsceneActive=false;deathChoicePending=false;slothShopOpen=false;saveBrowseActive=false;goldOrange=null;bullets=[];shooting=false;shootEnd=0;beaver=null;beaverLogs=[];storms=[];purpleShieldEnd=0;vacuumEnd=0;lastGoldOrangeEatTime=0;scoreEl.textContent=score;if(score>best){best=score;bestEl.textContent=best;}
+function loadGame(slotIndex){var gm=getCurrentGame();if(!gm||slotIndex>=gm.saves.length)return;var state=gm.saves[slotIndex];clearInterval(tickInterval);if(goldOrangeTimer)clearTimeout(goldOrangeTimer);if(beaverTimer)clearTimeout(beaverTimer);if(beaverLogInterval)clearInterval(beaverLogInterval);if(autoSaveInterval)clearInterval(autoSaveInterval);snake=state.snake;dir=state.dir;nextDir=state.nextDir;food=state.food;score=state.score;goldCount=state.goldCount;wanderer=state.wanderer;if(!wanderer){setTimeout(function rWL(){if(gameOver)return;if(currentScreen!=='main'){setTimeout(rWL,1000);return;}placeWanderer();draw();},2170);}enemies=state.enemies;lastEnemyThreshold=state.lastEnemyThreshold;running=true;killCount=state.killCount;spikeCount=state.spikeCount||0;rupees=state.rupees||0;extraLives=state.extraLives||0;ownedPortals=state.ownedPortals||[];happyBeaverCount=state.happyBeaverCount||0;totalRaccoonKills=state.totalRaccoonKills||0;totalWombatKills=state.totalWombatKills||0;capy5Beaten=state.capy5Beaten||false;capy7Beaten=state.capy7Beaten||false;claimedQuests=state.claimedQuests||[];dailyOrangesEaten=state.dailyOrangesEaten||0;dailyShootsActivated=state.dailyShootsActivated||0;var savedScreen=state.currentScreen||'main';currentScreen='main';gameOver=false;menuActive=false;saveMenuOpen=false;cutsceneActive=false;deathChoicePending=false;slothShopOpen=false;questShopOpen=false;saveBrowseActive=false;goldOrange=null;bullets=[];shooting=false;shootEnd=0;beaver=null;beaverLogs=[];storms=[];purpleShieldEnd=0;vacuumEnd=0;lastGoldOrangeEatTime=0;scoreEl.textContent=score;if(score>best){best=score;bestEl.textContent=best;}
   if(savedScreen==='capy2'){mainGameState=getGameState();enterCapy2();}
   else if(savedScreen==='capy3'){mainGameState=getGameState();enterCapy3();}
   else if(savedScreen==='capy4'){mainGameState=getGameState();enterCapy4();}
@@ -573,7 +573,7 @@ function drawCapy5Boss(){if(!capy5Boss)return;var bx=capy5Boss.x*GRID,by=capy5Bo
 
 function enterCapy5(){if(!mainGameState)mainGameState=getGameState();currentScreen='capy5';clearInterval(tickInterval);if(capy4StormTimer){clearTimeout(capy4StormTimer);capy4StormTimer=null;}var mid=Math.floor(ROWS/2);capy5Player={x:5,y:mid,facing:{x:1,y:0}};dir={x:1,y:0};nextDir={x:1,y:0};bullets=[];shooting=false;capy5MoveQueued=false;capy5HP=5;capy5Portals=[];capy5Victory=false;capy5Present=null;shieldUses=3;shieldActive5=false;shieldRechargeEnd=0;swordUses=5;swordSpinActive=false;swordSpinEnd=0;swordSpinHit=false;swordRechargeEnd=0;placeCapy5Enemies();capy5Running=false;tickInterval=setInterval(stepCapy5,parseInt(speedEl.value));drawCapy5();msgEl.textContent='Capy 5 — Arrow keys to move, ESC to return';}
 
-function stepCapy5(){if(!capy5Running||currentScreen!=='capy5')return;if(shieldUses<=0&&Date.now()>=shieldRechargeEnd)shieldUses=3;if(swordUses<=0&&Date.now()>=swordRechargeEnd)swordUses=5;if(swordSpinActive&&Date.now()>=swordSpinEnd){swordSpinActive=false;swordSpinHit=false;}if(swordSpinActive&&capy5Player&&!swordSpinHit){swordSpinHit=true;for(var i=capy5Enemies.length-1;i>=0;i--){var e=capy5Enemies[i];if(Math.abs(e.x-capy5Player.x)<=1&&Math.abs(e.y-capy5Player.y)<=1){e.hp--;if(e.hp<=0){capy5Enemies.splice(i,1);rupees+=1;}}}if(capy5Boss&&Math.abs(capy5Boss.x-capy5Player.x)<=2&&Math.abs(capy5Boss.y-capy5Player.y)<=2){capy5Boss.armor--;if(capy5Boss.armor<=0){capy5Boss=null;rupees+=3;}}}if(!capy5Victory&&capy5Enemies.length===0&&!capy5Boss){capy5Victory=true;capy5Portals=[{x:5,y:Math.floor(ROWS/2),label:'Sloth 1',color:'#ff6b6b',dest:'capy6'},{x:10,y:Math.floor(ROWS/2),label:'Capy 7',color:'#ffd93d',dest:'capy7'},{x:15,y:Math.floor(ROWS/2),label:'Sloth 3',color:'#6bcb77',dest:'capy8'}];capy5Present={x:capy5Player.x+2,y:capy5Player.y};capy5Present.x=Math.max(0,Math.min(COLS-1,capy5Present.x));}if(!capy5MoveQueued){moveCapy5Enemies();checkCapy5PlayerHits();drawCapy5();return;}capy5MoveQueued=false;dir={x:nextDir.x,y:nextDir.y};capy5Player.facing={x:dir.x,y:dir.y};var nx=capy5Player.x+dir.x*(capy5Victory?1:2),ny=capy5Player.y+dir.y*(capy5Victory?1:2);capy5Player.x=Math.max(0,Math.min(COLS-1,nx));capy5Player.y=Math.max(0,Math.min(ROWS-1,ny));moveCapy5Enemies();checkCapy5PlayerHits();if(!capy5Victory&&capy5Enemies.length===0&&!capy5Boss){capy5Victory=true;capy5Portals=[{x:5,y:Math.floor(ROWS/2),label:'Sloth 1',color:'#ff6b6b',dest:'capy6'},{x:10,y:Math.floor(ROWS/2),label:'Capy 7',color:'#ffd93d',dest:'capy7'},{x:15,y:Math.floor(ROWS/2),label:'Sloth 3',color:'#6bcb77',dest:'capy8'}];capy5Present={x:capy5Player.x+2,y:capy5Player.y};capy5Present.x=Math.max(0,Math.min(COLS-1,capy5Present.x));}if(capy5Present&&capy5Player&&capy5Player.x===capy5Present.x&&capy5Player.y===capy5Present.y){rupees+=2;msgEl.textContent='+2 rupees!';setTimeout(function(){if(!gameOver)msgEl.textContent='';},1000);capy5Present=null;}if(capy5Victory&&capy5Player){var hitP=capy5Portals.find(function(p){return p.x===capy5Player.x&&p.y===capy5Player.y;});if(hitP){clearInterval(tickInterval);if(hitP.dest==='capy6'){enterCapy6();}else if(hitP.dest==='capy7'){enterCapy7();}else if(hitP.dest==='capy8'){enterCapy8();}else{msgEl.textContent=hitP.label+' — Coming Soon!';}drawCapy5();return;}}drawCapy5();}
+function stepCapy5(){if(!capy5Running||currentScreen!=='capy5')return;if(shieldUses<=0&&Date.now()>=shieldRechargeEnd)shieldUses=3;if(swordUses<=0&&Date.now()>=swordRechargeEnd)swordUses=5;if(swordSpinActive&&Date.now()>=swordSpinEnd){swordSpinActive=false;swordSpinHit=false;}if(swordSpinActive&&capy5Player&&!swordSpinHit){swordSpinHit=true;for(var i=capy5Enemies.length-1;i>=0;i--){var e=capy5Enemies[i];if(Math.abs(e.x-capy5Player.x)<=1&&Math.abs(e.y-capy5Player.y)<=1){e.hp--;if(e.hp<=0){capy5Enemies.splice(i,1);rupees+=1;}}}if(capy5Boss&&Math.abs(capy5Boss.x-capy5Player.x)<=2&&Math.abs(capy5Boss.y-capy5Player.y)<=2){capy5Boss.armor--;if(capy5Boss.armor<=0){capy5Boss=null;rupees+=3;}}}if(!capy5Victory&&capy5Enemies.length===0&&!capy5Boss){capy5Victory=true;capy5Beaten=true;capy5Portals=[{x:5,y:Math.floor(ROWS/2),label:'Sloth 1',color:'#ff6b6b',dest:'capy6'},{x:10,y:Math.floor(ROWS/2),label:'Capy 7',color:'#ffd93d',dest:'capy7'},{x:15,y:Math.floor(ROWS/2),label:'Sloth 3',color:'#6bcb77',dest:'capy8'}];capy5Present={x:capy5Player.x+2,y:capy5Player.y};capy5Present.x=Math.max(0,Math.min(COLS-1,capy5Present.x));}if(!capy5MoveQueued){moveCapy5Enemies();checkCapy5PlayerHits();drawCapy5();return;}capy5MoveQueued=false;dir={x:nextDir.x,y:nextDir.y};capy5Player.facing={x:dir.x,y:dir.y};var nx=capy5Player.x+dir.x*(capy5Victory?1:2),ny=capy5Player.y+dir.y*(capy5Victory?1:2);capy5Player.x=Math.max(0,Math.min(COLS-1,nx));capy5Player.y=Math.max(0,Math.min(ROWS-1,ny));moveCapy5Enemies();checkCapy5PlayerHits();if(!capy5Victory&&capy5Enemies.length===0&&!capy5Boss){capy5Victory=true;capy5Beaten=true;capy5Portals=[{x:5,y:Math.floor(ROWS/2),label:'Sloth 1',color:'#ff6b6b',dest:'capy6'},{x:10,y:Math.floor(ROWS/2),label:'Capy 7',color:'#ffd93d',dest:'capy7'},{x:15,y:Math.floor(ROWS/2),label:'Sloth 3',color:'#6bcb77',dest:'capy8'}];capy5Present={x:capy5Player.x+2,y:capy5Player.y};capy5Present.x=Math.max(0,Math.min(COLS-1,capy5Present.x));}if(capy5Present&&capy5Player&&capy5Player.x===capy5Present.x&&capy5Player.y===capy5Present.y){rupees+=2;msgEl.textContent='+2 rupees!';setTimeout(function(){if(!gameOver)msgEl.textContent='';},1000);capy5Present=null;}if(capy5Victory&&capy5Player){var hitP=capy5Portals.find(function(p){return p.x===capy5Player.x&&p.y===capy5Player.y;});if(hitP){clearInterval(tickInterval);if(hitP.dest==='capy6'){enterCapy6();}else if(hitP.dest==='capy7'){enterCapy7();}else if(hitP.dest==='capy8'){enterCapy8();}else{msgEl.textContent=hitP.label+' — Coming Soon!';}drawCapy5();return;}}drawCapy5();}
 
 function drawCapy5(){ctx.fillStyle='#0d0a1a';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.strokeStyle='#1a1a30';ctx.lineWidth=0.5;for(var i=0;i<=COLS;i++){ctx.beginPath();ctx.moveTo(i*GRID,0);ctx.lineTo(i*GRID,canvas.height);ctx.stroke();}for(var i2=0;i2<=ROWS;i2++){ctx.beginPath();ctx.moveTo(0,i2*GRID);ctx.lineTo(canvas.width,i2*GRID);ctx.stroke();}ctx.fillStyle='rgba(255,255,255,0.3)';for(var s=0;s<15;s++){var sx2=((s*97+13)%COLS)*GRID+10,sy2=((s*53+7)%ROWS)*GRID+10;ctx.beginPath();ctx.arc(sx2,sy2,1,0,Math.PI*2);ctx.fill();}capy5Portals.forEach(function(p){var px=p.x*GRID,py=p.y*GRID;ctx.shadowColor=p.color;ctx.shadowBlur=10;ctx.fillStyle=p.color;ctx.fillRect(px+2,py+2,GRID-4,GRID-4);ctx.shadowBlur=0;ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.strokeRect(px+2,py+2,GRID-4,GRID-4);ctx.fillStyle='#fff';ctx.font='bold 8px Segoe UI';ctx.textAlign='center';ctx.fillText(p.label,px+GRID/2,py-3);});if(capy5Present){var prx=capy5Present.x*GRID,pry=capy5Present.y*GRID;ctx.fillStyle='#e74c3c';ctx.fillRect(prx+3,pry+5,GRID-6,GRID-8);ctx.fillStyle='#c0392b';ctx.fillRect(prx+GRID/2-1,pry+3,2,GRID-4);ctx.fillRect(prx+3,pry+GRID/2-1,GRID-6,2);ctx.fillStyle='#ffd700';ctx.beginPath();ctx.moveTo(prx+GRID/2-4,pry+4);ctx.lineTo(prx+GRID/2,pry);ctx.lineTo(prx+GRID/2+4,pry+4);ctx.fill();ctx.shadowColor='#ffd700';ctx.shadowBlur=6;ctx.fillStyle='#ffd700';ctx.font='bold 8px Segoe UI';ctx.textAlign='center';ctx.fillText('2R',prx+GRID/2,pry-2);ctx.shadowBlur=0;}capy5Enemies.forEach(function(e){drawRaccoon(e.x*GRID+GRID/2,e.y*GRID+GRID/2);});drawCapy5Boss();if(capy5Player){var px2=capy5Player.x*GRID+GRID/2,py2=capy5Player.y*GRID+GRID/2,f=capy5Player.facing;var shX=px2-f.y*10,shY=py2+f.x*10;ctx.fillStyle='#a0a0d0';ctx.beginPath();ctx.ellipse(shX,shY,5,7,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#9090c0';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(shX,shY,5,7,0,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#d470ff';ctx.beginPath();ctx.arc(shX,shY,2,0,Math.PI*2);ctx.fill();var sbX=px2+f.y*8,sbY=py2-f.x*8,stX=sbX+f.x*14,stY=sbY+f.y*14;ctx.strokeStyle='#e0e0f0';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(sbX,sbY);ctx.lineTo(stX,stY);ctx.stroke();ctx.strokeStyle='#ffd700';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(sbX-f.y*3,sbY+f.x*3);ctx.lineTo(sbX+f.y*3,sbY-f.x*3);ctx.stroke();ctx.strokeStyle='#8B4513';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(sbX,sbY);ctx.lineTo(sbX-f.x*5,sbY-f.y*5);ctx.stroke();ctx.fillStyle='#9b59b6';ctx.beginPath();ctx.arc(px2,py2,7,0,Math.PI*2);ctx.fill();ctx.fillStyle='#7d3c98';ctx.beginPath();ctx.arc(px2-5,py2-6,2.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px2+5,py2-6,2.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px2-3,py2-2,1.8,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px2+3,py2-2,1.8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(px2-3,py2-2,0.9,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px2+3,py2-2,0.9,0,Math.PI*2);ctx.fill();ctx.fillStyle='#6c3483';ctx.beginPath();ctx.ellipse(px2,py2+2,2.5,1.5,0,0,Math.PI*2);ctx.fill();}if(shieldActive5&&capy5Player){ctx.strokeStyle='rgba(100,150,255,0.6)';ctx.shadowColor='#6496ff';ctx.shadowBlur=12;ctx.lineWidth=3;ctx.beginPath();ctx.arc(capy5Player.x*GRID+GRID/2,capy5Player.y*GRID+GRID/2,14,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;}if(swordSpinActive&&capy5Player){var px3=capy5Player.x*GRID+GRID/2,py3=capy5Player.y*GRID+GRID/2;var angle=(Date.now()%300)/300*Math.PI*2;
   // Circular slash trail (fading arc)
@@ -828,7 +828,7 @@ function drawCastleCutscene(knightX,frame,title){
 }
 
 // === SLOTH 2 ===
-var sloth2Running=false,sloth2Player=null,sloth2MoveQueued=false,sloth2Merchants=[],sloth2RedSloth=null;
+var sloth2Running=false,sloth2Player=null,sloth2MoveQueued=false,sloth2Merchants=[],sloth2RedSloth=null,sloth2QuestSloth=null;
 
 function enterSloth2(){
   if(!mainGameState)mainGameState=getGameState();
@@ -836,8 +836,9 @@ function enterSloth2(){
   sloth2Player={x:Math.floor(COLS/2),y:Math.floor(ROWS/2)};
   sloth2Running=false;sloth2MoveQueued=false;
   sloth2Merchants=[];
-  for(var si=0;si<7;si++){var sx,sy;do{sx=2+Math.floor(Math.random()*(COLS-4));sy=2+Math.floor(Math.random()*(ROWS-4));}while(sx===sloth2Player.x&&sy===sloth2Player.y||sloth2Merchants.some(function(m){return m.x===sx&&m.y===sy;}));sloth2Merchants.push({x:sx,y:sy,discount:si===0,purple:si===1,blue:si===3,yellow:si===4,orange:si===5,scam:si===6});}
-  var rsx3,rsy3;do{rsx3=2+Math.floor(Math.random()*(COLS-4));rsy3=2+Math.floor(Math.random()*(ROWS-4));}while(rsx3===sloth2Player.x&&rsy3===sloth2Player.y||sloth2Merchants.some(function(m){return m.x===rsx3&&m.y===rsy3;}));sloth2RedSloth={x:rsx3,y:rsy3};
+  sloth2QuestSloth={x:COLS-5,y:1};
+  for(var si=0;si<7;si++){var sx,sy;do{sx=2+Math.floor(Math.random()*(COLS-4));sy=2+Math.floor(Math.random()*(ROWS-4));}while(sx===sloth2Player.x&&sy===sloth2Player.y||sloth2Merchants.some(function(m){return m.x===sx&&m.y===sy;})||(sx>=sloth2QuestSloth.x&&sx<=sloth2QuestSloth.x+1&&sy>=sloth2QuestSloth.y&&sy<=sloth2QuestSloth.y+2));sloth2Merchants.push({x:sx,y:sy,discount:si===0,purple:si===1,blue:si===3,yellow:si===4,orange:si===5,scam:si===6});}
+  var rsx3,rsy3;do{rsx3=2+Math.floor(Math.random()*(COLS-4));rsy3=2+Math.floor(Math.random()*(ROWS-4));}while(rsx3===sloth2Player.x&&rsy3===sloth2Player.y||sloth2Merchants.some(function(m){return m.x===rsx3&&m.y===rsy3;})||(rsx3>=sloth2QuestSloth.x&&rsx3<=sloth2QuestSloth.x+1&&rsy3>=sloth2QuestSloth.y&&rsy3<=sloth2QuestSloth.y+2));sloth2RedSloth={x:rsx3,y:rsy3};
   tickInterval=setInterval(stepSloth2,100);
   drawSloth2();msgEl.textContent='Sloth 2 — Arrow keys to move, ESC to return';
 }
@@ -851,6 +852,7 @@ function stepSloth2(){
   var hitMerchant=null;sloth2Merchants.forEach(function(m){if(m.x===sloth2Player.x&&m.y===sloth2Player.y)hitMerchant=m;});
   if(hitMerchant){slothPos=sloth2Player;if(hitMerchant.purple){openBeaverShop();}else if(hitMerchant.yellow){openGamble();}else if(hitMerchant.orange){openInfoShop();}else if(hitMerchant.scam){openScamShop();}else if(hitMerchant.blue&&isBlueHour()){openBlueShop();}else if(hitMerchant.discount){openDiscountShop();}else{openSlothShop();}return;}
   if(sloth2RedSloth&&sloth2Player.x===sloth2RedSloth.x&&sloth2Player.y===sloth2RedSloth.y){openPortalShop([{name:'Sloth 1',cost:11,dest:'capy6'},{name:'Sloth 3',cost:11,dest:'capy8'},{name:'Capy 3',cost:11,dest:'capy3'}]);return;}
+  if(sloth2QuestSloth&&sloth2Player.x>=sloth2QuestSloth.x&&sloth2Player.x<=sloth2QuestSloth.x+1&&sloth2Player.y>=sloth2QuestSloth.y&&sloth2Player.y<=sloth2QuestSloth.y+2){openQuestShop();return;}
   drawSloth2();
 }
 
@@ -870,6 +872,7 @@ function drawSloth2(){
   }
   sloth2Merchants.forEach(function(m){if(m.purple)drawPurpleSloth(m.x,m.y);else if(m.yellow)drawYellowSloth(m.x,m.y);else if(m.orange)drawOrangeSloth(m.x,m.y);else if(m.scam)drawScamSloth(m.x,m.y);else if(m.blue&&isBlueHour())drawBlueSloth(m.x,m.y);else if(m.discount)drawGreenSloth(m.x,m.y);else drawSloth(m.x,m.y);});
   if(sloth2RedSloth)drawRedSloth(sloth2RedSloth.x,sloth2RedSloth.y);
+  if(sloth2QuestSloth)drawQuestSloth(sloth2QuestSloth.x,sloth2QuestSloth.y);
   ctx.fillStyle='#3498db';ctx.shadowColor='#3498db';ctx.shadowBlur=15;ctx.font='bold 42px Segoe UI';ctx.textAlign='center';ctx.fillText('Sloth 2',canvas.width/2,36);ctx.shadowBlur=0;
   ctx.fillStyle='#666';ctx.font='14px Segoe UI';ctx.fillText('Coming Soon — Press ESC to return',canvas.width/2,canvas.height-15);
 }
@@ -924,7 +927,7 @@ function stepCapy7(){
     if(capy7Player.x<-1||capy7Player.x>=COLS+1)die();
   }
   // Check win
-  if(capy7Player.y<=C7_ISLAND_TOP){capy7Won=true;capy7CutsceneActive=true;capy7CutsceneFrame=0;capy7KnightX=0;}
+  if(capy7Player.y<=C7_ISLAND_TOP){capy7Won=true;capy7Beaten=true;capy7CutsceneActive=true;capy7CutsceneFrame=0;capy7KnightX=0;}
   // Check sloth
   if(slothPos&&Math.abs(capy7Player.x-slothPos.x)<1&&capy7Player.y===slothPos.y){openSlothShop();return;}
   drawCapy7();
@@ -1703,6 +1706,167 @@ function buyFromSloth(itemNum){
 function checkSlothCollision(){
   if(!slothPos||!snake||snake.length===0)return false;
   return snake[0].x===slothPos.x&&snake[0].y===slothPos.y;
+}
+
+// === QUEST SHOP ===
+var questShopOpen=false,questShopSelection=1,questShopMsg='';
+
+var ALL_QUESTS=[
+  // Raccoon kills
+  {id:'rk3',  name:'Pest Control',        desc:'Kill 3 raccoons',       reward:2,  goal:3,  progress:function(){return Math.min(totalRaccoonKills,3);}},
+  {id:'rk5',  name:'Raccoon Hunter',      desc:'Kill 5 raccoons',       reward:3,  goal:5,  progress:function(){return Math.min(totalRaccoonKills,5);}},
+  {id:'rk10', name:'Raccoon Menace',      desc:'Kill 10 raccoons',      reward:6,  goal:10, progress:function(){return Math.min(totalRaccoonKills,10);}},
+  {id:'rk20', name:'Raccoon Nightmare',   desc:'Kill 20 raccoons',      reward:9,  goal:20, progress:function(){return Math.min(totalRaccoonKills,20);}},
+  // Wombat kills
+  {id:'wk3',  name:'Wombat Trouble',      desc:'Kill 3 wombats',        reward:3,  goal:3,  progress:function(){return Math.min(totalWombatKills,3);}},
+  {id:'wk5',  name:'Wombat Hunter',       desc:'Kill 5 wombats',        reward:5,  goal:5,  progress:function(){return Math.min(totalWombatKills,5);}},
+  {id:'wk10', name:'Wombat Slayer',       desc:'Kill 10 wombats',       reward:8,  goal:10, progress:function(){return Math.min(totalWombatKills,10);}},
+  {id:'wk15', name:'Wombat Bane',         desc:'Kill 15 wombats',       reward:11, goal:15, progress:function(){return Math.min(totalWombatKills,15);}},
+  // Total kills
+  {id:'tk8',  name:'First Blood',         desc:'Kill 8 enemies total',  reward:3,  goal:8,  progress:function(){return Math.min(totalRaccoonKills+totalWombatKills,8);}},
+  {id:'tk15', name:'Enemy Purge',         desc:'Kill 15 enemies total', reward:5,  goal:15, progress:function(){return Math.min(totalRaccoonKills+totalWombatKills,15);}},
+  {id:'tk30', name:'Exterminator',        desc:'Kill 30 enemies total', reward:9,  goal:30, progress:function(){return Math.min(totalRaccoonKills+totalWombatKills,30);}},
+  {id:'tk50', name:'Mass Extinction',     desc:'Kill 50 enemies total', reward:14, goal:50, progress:function(){return Math.min(totalRaccoonKills+totalWombatKills,50);}},
+  // Score quests
+  {id:'sc5',  name:'Getting Started',     desc:'Reach score 5',         reward:2,  goal:5,  progress:function(){return Math.min(goldCount,5);}},
+  {id:'sc10', name:'Double Digits',       desc:'Reach score 10',        reward:4,  goal:10, progress:function(){return Math.min(goldCount,10);}},
+  {id:'sc20', name:'Gold Rush',           desc:'Reach score 20',        reward:7,  goal:20, progress:function(){return Math.min(goldCount,20);}},
+  {id:'sc30', name:'Score Machine',       desc:'Reach score 30',        reward:11, goal:30, progress:function(){return Math.min(goldCount,30);}},
+  // Snake length
+  {id:'sl8',  name:'Growing Capy',        desc:'Grow to 8 segments',    reward:2,  goal:8,  progress:function(){return Math.min(snake?snake.length:0,8);}},
+  {id:'sl15', name:'Long Boy',            desc:'Grow to 15 segments',   reward:5,  goal:15, progress:function(){return Math.min(snake?snake.length:0,15);}},
+  {id:'sl25', name:'Mega Snake',          desc:'Grow to 25 segments',   reward:9,  goal:25, progress:function(){return Math.min(snake?snake.length:0,25);}},
+  // Spikes
+  {id:'sp1',  name:'Prickly',             desc:'Earn 1 spike',          reward:5,  goal:1,  progress:function(){return Math.min(spikeCount,1);}},
+  {id:'sp3',  name:'Spike Lord',          desc:'Earn 3 spikes',         reward:12, goal:3,  progress:function(){return Math.min(spikeCount,3);}},
+  // Oranges eaten
+  {id:'oe10', name:'Orange Collector',    desc:'Eat 10 oranges',        reward:3,  goal:10, progress:function(){return Math.min(dailyOrangesEaten,10);}},
+  {id:'oe25', name:'Orange Feast',        desc:'Eat 25 oranges',        reward:6,  goal:25, progress:function(){return Math.min(dailyOrangesEaten,25);}},
+  {id:'oe50', name:'Citrus Addict',       desc:'Eat 50 oranges',        reward:11, goal:50, progress:function(){return Math.min(dailyOrangesEaten,50);}},
+  // Shooting
+  {id:'sh3',  name:'Sharpshooter',        desc:'Activate shooting 3x',  reward:4,  goal:3,  progress:function(){return Math.min(dailyShootsActivated,3);}},
+  {id:'sh6',  name:'Trigger Happy',       desc:'Activate shooting 6x',  reward:8,  goal:6,  progress:function(){return Math.min(dailyShootsActivated,6);}},
+  // Landscapes
+  {id:'c5',   name:'Space Conqueror',     desc:'Beat Capy 5',           reward:10, goal:1,  progress:function(){return capy5Beaten?1:0;}},
+  {id:'c7',   name:'River Master',        desc:'Beat Capy 7',           reward:10, goal:1,  progress:function(){return capy7Beaten?1:0;}}
+];
+
+var QUESTS=[];
+
+function dailySeed(){
+  var d=new Date().toDateString();
+  var h=0;
+  for(var i=0;i<d.length;i++){h=((h<<5)-h)+d.charCodeAt(i);h|=0;}
+  return Math.abs(h);
+}
+
+function pickDailyQuests(){
+  var seed=dailySeed();
+  var pool=ALL_QUESTS.slice();
+  for(var i=pool.length-1;i>0;i--){
+    seed=(seed*1103515245+12345)&0x7fffffff;
+    var j=seed%(i+1);
+    var tmp=pool[i];pool[i]=pool[j];pool[j]=tmp;
+  }
+  QUESTS=pool.slice(0,7);
+}
+
+function getQuestDay(){
+  var data=JSON.parse(localStorage.getItem('crawlingCapysQuestDay')||'{}');
+  return data.day||'';
+}
+function checkQuestDayReset(){
+  var today=new Date().toDateString();
+  if(getQuestDay()!==today){
+    totalRaccoonKills=0;totalWombatKills=0;capy5Beaten=false;capy7Beaten=false;claimedQuests=[];
+    dailyOrangesEaten=0;dailyShootsActivated=0;
+    localStorage.setItem('crawlingCapysQuestDay',JSON.stringify({day:today}));
+  }
+  pickDailyQuests();
+}
+
+function openQuestShop(){
+  checkQuestDayReset();
+  questShopOpen=true;questShopSelection=1;questShopMsg='';
+  clearInterval(tickInterval);drawQuestShop();
+}
+
+function drawQuestShop(){
+  ctx.fillStyle='rgba(0,0,0,0.9)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.textAlign='center';
+  ctx.fillStyle='#e67e22';ctx.font='bold 24px Segoe UI';
+  ctx.fillText('Daily Quests',canvas.width/2,35);
+  ctx.fillStyle='#2ecc71';ctx.font='14px Segoe UI';
+  ctx.fillText('Rupees: '+rupees,canvas.width/2,55);
+  QUESTS.forEach(function(q,i){
+    var y=75+i*44;var num=i+1;
+    var prog=q.progress();var done=prog>=q.goal;
+    var claimed=claimedQuests.indexOf(q.id)!==-1;
+    var selected=questShopSelection===num;
+    ctx.fillStyle=selected?(done&&!claimed?'#1a3a1a':'#1a1a2e'):'#0a0a1a';
+    ctx.fillRect(15,y-12,370,38);
+    ctx.strokeStyle=selected?'#e67e22':(claimed?'#555':(done?'#2ecc71':'#222'));
+    ctx.lineWidth=selected?2:1;
+    ctx.strokeRect(15,y-12,370,38);
+    if(selected){ctx.fillStyle='#e67e22';ctx.font='bold 14px Segoe UI';ctx.textAlign='left';ctx.fillText('>',5,y+8);}
+    ctx.fillStyle=claimed?'#555':(done?'#2ecc71':'#ccc');ctx.font='bold 13px Segoe UI';ctx.textAlign='left';
+    ctx.fillText(q.name,25,y+3);
+    ctx.fillStyle=claimed?'#444':'#888';ctx.font='11px Segoe UI';
+    ctx.fillText(q.desc,25,y+18);
+    var barX=240,barY=y-2,barW=70,barH=10;
+    ctx.fillStyle='#1a1a2e';ctx.fillRect(barX,barY,barW,barH);
+    var pct=Math.min(prog/q.goal,1);
+    ctx.fillStyle=claimed?'#555':(done?'#2ecc71':'#e67e22');
+    ctx.fillRect(barX,barY,barW*pct,barH);
+    ctx.strokeStyle='#333';ctx.lineWidth=1;ctx.strokeRect(barX,barY,barW,barH);
+    ctx.fillStyle=claimed?'#555':'#eee';ctx.font='9px Segoe UI';ctx.textAlign='center';
+    ctx.fillText(prog+'/'+q.goal,barX+barW/2,barY+9);
+    ctx.textAlign='right';
+    if(claimed){ctx.fillStyle='#666';ctx.font='bold 12px Segoe UI';ctx.fillText('DONE',375,y+10);}
+    else{ctx.fillStyle=done?'#ffd700':'#888';ctx.font='bold 12px Segoe UI';ctx.fillText('+'+q.reward+'R',375,y+10);}
+  });
+  ctx.textAlign='center';ctx.fillStyle='#666';ctx.font='12px Segoe UI';
+  ctx.fillText('Up/Down select | Enter claim | Alt/ESC close',canvas.width/2,canvas.height-15);
+  if(questShopMsg){ctx.fillStyle='#ffd700';ctx.font='bold 14px Segoe UI';ctx.fillText(questShopMsg,canvas.width/2,canvas.height-35);}
+  msgEl.textContent='Daily Quests — Rupees: '+rupees;
+}
+
+function claimQuest(idx){
+  if(idx<0||idx>=QUESTS.length)return;
+  var q=QUESTS[idx];
+  if(claimedQuests.indexOf(q.id)!==-1){questShopMsg='Already claimed!';drawQuestShop();setTimeout(function(){questShopMsg='';if(questShopOpen)drawQuestShop();},1200);return;}
+  if(q.progress()<q.goal){questShopMsg='Not completed yet!';drawQuestShop();setTimeout(function(){questShopMsg='';if(questShopOpen)drawQuestShop();},1200);return;}
+  rupees+=q.reward;claimedQuests.push(q.id);
+  questShopMsg='Claimed +'+q.reward+' rupees!';
+  drawQuestShop();setTimeout(function(){questShopMsg='';if(questShopOpen)drawQuestShop();},1500);
+}
+
+function drawQuestSloth(sx,sy){
+  var px=sx*GRID+GRID,py=sy*GRID+GRID*1.5;
+  ctx.shadowColor='#e67e22';ctx.shadowBlur=12;
+  ctx.fillStyle='#8a7050';ctx.beginPath();ctx.ellipse(px,py+10,16,22,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#a89070';ctx.beginPath();ctx.ellipse(px,py+14,10,14,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#8a7050';ctx.beginPath();ctx.arc(px,py-14,14,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#5a4030';
+  ctx.beginPath();ctx.ellipse(px-6,py-14,6,5,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+6,py-14,6,5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e67e22';
+  ctx.beginPath();ctx.ellipse(px-6,py-14,3,1.5,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+6,py-14,3,1.5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#3a2a1a';ctx.beginPath();ctx.arc(px,py-9,2.5,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#5a4030';ctx.lineWidth=1.2;
+  ctx.beginPath();ctx.arc(px,py-5,4,0.1*Math.PI,0.9*Math.PI);ctx.stroke();
+  ctx.strokeStyle='#8a7050';ctx.lineWidth=5;
+  ctx.beginPath();ctx.moveTo(px-14,py+2);ctx.quadraticCurveTo(px-26,py-8,px-22,py-18);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px+14,py+2);ctx.quadraticCurveTo(px+26,py-8,px+22,py-18);ctx.stroke();
+  ctx.strokeStyle='#4a3a2a';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(px-22,py-18);ctx.lineTo(px-25,py-22);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px-22,py-18);ctx.lineTo(px-19,py-22);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px+22,py-18);ctx.lineTo(px+25,py-22);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px+22,py-18);ctx.lineTo(px+19,py-22);ctx.stroke();
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#e67e22';ctx.font='bold 9px Segoe UI';ctx.textAlign='center';
+  ctx.fillText('QUESTS',px,py-30);
 }
 
 // === MENU ===

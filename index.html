@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CrawlingCapys</title>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -61,10 +61,34 @@
     <option value="40">Insane</option>
   </select>
 </div>
-<div id="gameMessage">Press any arrow key or WASD to start</div>
+<div id="gameMessage">Swipe or use arrows / WASD to start</div>
+<div id="mobile-controls">
+  <div id="mobile-main">
+    <div id="dpad">
+      <button class="dpad-btn" id="btn-up" data-key="ArrowUp">▲</button>
+      <button class="dpad-btn" id="btn-left" data-key="ArrowLeft">◄</button>
+      <button class="dpad-btn" id="btn-down" data-key="ArrowDown">▼</button>
+      <button class="dpad-btn" id="btn-right" data-key="ArrowRight">►</button>
+    </div>
+    <div id="action-btns">
+      <button class="action-btn" data-key="Enter">ENTER</button>
+      <button class="action-btn" data-key="Escape">ESC</button>
+      <button class="action-btn" data-key="Tab">MENU</button>
+      <button class="action-btn" data-key="r">R</button>
+    </div>
+  </div>
+  <div id="extra-btns">
+    <button class="action-btn" data-key="1">1</button>
+    <button class="action-btn" data-key="2">2</button>
+    <button class="action-btn" data-key=" ">SPC</button>
+    <button class="action-btn" data-key="=">SAVE</button>
+    <button class="action-btn" data-key="-">LOAD</button>
+  </div>
+</div>
 </div>
 <script src="game.js?v=6"></script>
 <script src="game_core.js?v=6"></script>
 <script src="game_part2.js?v=6"></script>
+<script src="mobile.js?v=6"></script>
 </body>
 </html>
