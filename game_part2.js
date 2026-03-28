@@ -25,7 +25,7 @@ function enterCapy2() {
 function stepCapy2() {
   if(!capy2Running||currentScreen!=='capy2')return;
   if(Date.now()>=capy2TimerEnd){if(capy2Enemies.length>0){returnToMainGame();return;}}
-  if(capy2Enemies.length===0){spikeCount++;saveGame();returnToMainGame();msgEl.textContent='Enemies cleared! Spike earned!';setTimeout(function(){if(!gameOver)msgEl.textContent='';},2000);return;}
+  if(capy2Enemies.length===0){returnToMainGame();spikeCount++;saveGame();msgEl.textContent='Enemies cleared! Spike earned!';setTimeout(function(){if(!gameOver)msgEl.textContent='';},2000);return;}
   dir={x:nextDir.x,y:nextDir.y};var head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
   if(head.x<0||head.x>=COLS||head.y<0||head.y>=ROWS)return die();
   if(snake.some(function(s){return s.x===head.x&&s.y===head.y;}))return die();
@@ -57,7 +57,7 @@ function returnToMainGame() {
   wanderer=mainGameState.wanderer;
   if(!wanderer){setTimeout(function rWR(){if(gameOver)return;if(currentScreen!=='main'){setTimeout(rWR,1000);return;}placeWanderer();draw();},2170);}
   enemies=mainGameState.enemies;lastEnemyThreshold=mainGameState.lastEnemyThreshold;running=mainGameState.running;
-  killCount=mainGameState.killCount;spikeCount=mainGameState.spikeCount||0;rupees=mainGameState.rupees||0;extraLives=mainGameState.extraLives||0;
+  killCount=mainGameState.killCount;spikeCount=mainGameState.spikeCount||0;rupees=mainGameState.rupees||0;extraLives=mainGameState.extraLives||0;ownedPortals=mainGameState.ownedPortals||[];happyBeaverCount=mainGameState.happyBeaverCount||0;
   currentScreen='main';gameOver=false;bullets=[];shooting=false;shootEnd=0;goldOrange=null;beaver=null;beaverLogs=[];storms=[];purpleShieldEnd=0;vacuumEnd=0;lastGoldOrangeEatTime=0;
   scoreEl.textContent=score;if(score>best){best=score;bestEl.textContent=best;}
   scheduleGoldOrange();scheduleBeaver();startAutoSave();restartTimer();draw();
@@ -89,22 +89,25 @@ function getAllGames(){return JSON.parse(localStorage.getItem('crawlingCapysGame
 function saveAllGames(games){localStorage.setItem('crawlingCapysGames',JSON.stringify(games));}
 function getCurrentGame(){var games=getAllGames();return games.find(function(g){return g.id===currentGameId;})||null;}
 
-function getGameState(){return{snake:JSON.parse(JSON.stringify(snake)),dir:{x:dir.x,y:dir.y},nextDir:{x:nextDir.x,y:nextDir.y},food:{x:food.x,y:food.y},score:score,goldCount:goldCount,wanderer:wanderer?{x:wanderer.x,y:wanderer.y}:null,enemies:JSON.parse(JSON.stringify(enemies)),lastEnemyThreshold:lastEnemyThreshold,running:running,killCount:killCount,spikeCount:spikeCount,rupees:rupees,extraLives:extraLives,currentScreen:currentScreen,timestamp:Date.now()};}
+function getGameState(){return{snake:JSON.parse(JSON.stringify(snake)),dir:{x:dir.x,y:dir.y},nextDir:{x:nextDir.x,y:nextDir.y},food:{x:food.x,y:food.y},score:score,goldCount:goldCount,wanderer:wanderer?{x:wanderer.x,y:wanderer.y}:null,enemies:JSON.parse(JSON.stringify(enemies)),lastEnemyThreshold:lastEnemyThreshold,running:running,killCount:killCount,spikeCount:spikeCount,rupees:rupees,extraLives:extraLives,ownedPortals:JSON.parse(JSON.stringify(ownedPortals)),happyBeaverCount:happyBeaverCount,currentScreen:currentScreen,timestamp:Date.now()};}
 
 function saveGame(){if(gameOver||!currentGameId)return;var state=getGameState();var games=getAllGames();var gm=games.find(function(g){return g.id===currentGameId;});if(!gm)return;gm.saves.unshift(state);if(gm.saves.length>MAX_SAVES)gm.saves.length=MAX_SAVES;saveAllGames(games);msgEl.textContent='Game saved! ('+gm.saves.length+'/'+MAX_SAVES+' slots)';setTimeout(function(){if(!gameOver)msgEl.textContent='';},1500);}
 
-function loadGame(slotIndex){var gm=getCurrentGame();if(!gm||slotIndex>=gm.saves.length)return;var state=gm.saves[slotIndex];clearInterval(tickInterval);if(goldOrangeTimer)clearTimeout(goldOrangeTimer);if(beaverTimer)clearTimeout(beaverTimer);if(beaverLogInterval)clearInterval(beaverLogInterval);if(autoSaveInterval)clearInterval(autoSaveInterval);snake=state.snake;dir=state.dir;nextDir=state.nextDir;food=state.food;score=state.score;goldCount=state.goldCount;wanderer=state.wanderer;if(!wanderer){setTimeout(function rWL(){if(gameOver)return;if(currentScreen!=='main'){setTimeout(rWL,1000);return;}placeWanderer();draw();},2170);}enemies=state.enemies;lastEnemyThreshold=state.lastEnemyThreshold;running=true;killCount=state.killCount;spikeCount=state.spikeCount||0;rupees=state.rupees||0;extraLives=state.extraLives||0;var savedScreen=state.currentScreen||'main';currentScreen='main';gameOver=false;menuActive=false;saveMenuOpen=false;goldOrange=null;bullets=[];shooting=false;shootEnd=0;beaver=null;beaverLogs=[];storms=[];purpleShieldEnd=0;vacuumEnd=0;lastGoldOrangeEatTime=0;scoreEl.textContent=score;if(score>best){best=score;bestEl.textContent=best;}
+function loadGame(slotIndex){var gm=getCurrentGame();if(!gm||slotIndex>=gm.saves.length)return;var state=gm.saves[slotIndex];clearInterval(tickInterval);if(goldOrangeTimer)clearTimeout(goldOrangeTimer);if(beaverTimer)clearTimeout(beaverTimer);if(beaverLogInterval)clearInterval(beaverLogInterval);if(autoSaveInterval)clearInterval(autoSaveInterval);snake=state.snake;dir=state.dir;nextDir=state.nextDir;food=state.food;score=state.score;goldCount=state.goldCount;wanderer=state.wanderer;if(!wanderer){setTimeout(function rWL(){if(gameOver)return;if(currentScreen!=='main'){setTimeout(rWL,1000);return;}placeWanderer();draw();},2170);}enemies=state.enemies;lastEnemyThreshold=state.lastEnemyThreshold;running=true;killCount=state.killCount;spikeCount=state.spikeCount||0;rupees=state.rupees||0;extraLives=state.extraLives||0;ownedPortals=state.ownedPortals||[];happyBeaverCount=state.happyBeaverCount||0;var savedScreen=state.currentScreen||'main';currentScreen='main';gameOver=false;menuActive=false;saveMenuOpen=false;cutsceneActive=false;deathChoicePending=false;slothShopOpen=false;saveBrowseActive=false;goldOrange=null;bullets=[];shooting=false;shootEnd=0;beaver=null;beaverLogs=[];storms=[];purpleShieldEnd=0;vacuumEnd=0;lastGoldOrangeEatTime=0;scoreEl.textContent=score;if(score>best){best=score;bestEl.textContent=best;}
   if(savedScreen==='capy2'){mainGameState=getGameState();enterCapy2();}
   else if(savedScreen==='capy3'){mainGameState=getGameState();enterCapy3();}
   else if(savedScreen==='capy4'){mainGameState=getGameState();enterCapy4();}
   else if(savedScreen==='capy5'){mainGameState=getGameState();enterCapy5();}
   else if(savedScreen==='capy7'){mainGameState=getGameState();enterCapy7();}
+  else if(savedScreen==='capy6'){mainGameState=getGameState();enterCapy6();}
+  else if(savedScreen==='capy8'){mainGameState=getGameState();enterCapy8();}
+  else if(savedScreen==='sloth2'){mainGameState=getGameState();enterSloth2();}
   else{scheduleGoldOrange();scheduleBeaver();startAutoSave();restartTimer();draw();}
   msgEl.textContent='Game loaded!';setTimeout(function(){if(!gameOver)msgEl.textContent='';},1500);}
 
 function getSavesList(){var gm=getCurrentGame();return gm?gm.saves:[];}
 
-function showSaveMenu(){var saves=getSavesList();ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.textAlign='center';if(deleteMode2){ctx.fillStyle='#ff4757';ctx.font='bold 22px Segoe UI';ctx.fillText('Delete Save (press 1-'+Math.max(saves.length,1)+')',canvas.width/2,40);}else{ctx.fillStyle='#00ff88';ctx.font='bold 22px Segoe UI';ctx.fillText('Saves',canvas.width/2,40);}if(saves.length===0){ctx.fillStyle='#888';ctx.font='16px Segoe UI';ctx.fillText('No saves yet',canvas.width/2,canvas.height/2);}else{saves.forEach(function(s,i){var y=75+i*50;var date=new Date(s.timestamp);var ts=date.toLocaleTimeString();ctx.fillStyle=deleteMode2?'#ff6b7a':'#eee';ctx.font='16px Segoe UI';ctx.fillText('['+(i+1)+'] Score: '+s.score+' | Gold: '+s.goldCount+' | '+ts,canvas.width/2,y);});}ctx.fillStyle='#666';ctx.font='13px Segoe UI';ctx.fillText(deleteMode2?'Press number to delete | ESC cancel':'Press number to load | X to delete | Space to resume',canvas.width/2,canvas.height-20);msgEl.textContent=deleteMode2?'Delete mode':'Saves — Space to resume';}
+function showSaveMenu(){var saves=getSavesList();var isDel=deleteMode2||saveBrowseDelete;ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.textAlign='center';if(isDel){ctx.fillStyle='#ff4757';ctx.font='bold 22px Segoe UI';ctx.fillText('Delete Save',canvas.width/2,40);}else{ctx.fillStyle='#00ff88';ctx.font='bold 22px Segoe UI';ctx.fillText('Saves',canvas.width/2,40);}if(saves.length===0){ctx.fillStyle='#888';ctx.font='16px Segoe UI';ctx.fillText('No saves yet',canvas.width/2,canvas.height/2);}else{var maxShow=Math.min(saves.length,7);for(var i=0;i<maxShow;i++){var y=75+i*50;var date=new Date(saves[i].timestamp);var ts=date.toLocaleTimeString();ctx.fillStyle=isDel?'#ff6b7a':'#eee';ctx.font='16px Segoe UI';ctx.fillText('['+(i+1)+'] Score: '+saves[i].score+' | Gold: '+saves[i].goldCount+' | '+ts,canvas.width/2,y);}if(saves.length>7){ctx.fillStyle='#888';ctx.font='12px Segoe UI';ctx.fillText('('+(saves.length-7)+' more saves...)',canvas.width/2,75+7*50);}}ctx.fillStyle='#666';ctx.font='13px Segoe UI';ctx.fillText(isDel?'Number/click to delete | ESC cancel':'Number/click to load | X delete | Space resume | ESC back',canvas.width/2,canvas.height-20);msgEl.textContent=isDel?'Delete mode':'Pick a save';}
 
 function startAutoSave(){if(autoSaveInterval)clearInterval(autoSaveInterval);autoSaveInterval=setInterval(function(){if(!gameOver&&running&&currentScreen==='main')saveGame();},34000);}
 
@@ -570,7 +573,7 @@ function drawCapy5Boss(){if(!capy5Boss)return;var bx=capy5Boss.x*GRID,by=capy5Bo
 
 function enterCapy5(){if(!mainGameState)mainGameState=getGameState();currentScreen='capy5';clearInterval(tickInterval);if(capy4StormTimer){clearTimeout(capy4StormTimer);capy4StormTimer=null;}var mid=Math.floor(ROWS/2);capy5Player={x:5,y:mid,facing:{x:1,y:0}};dir={x:1,y:0};nextDir={x:1,y:0};bullets=[];shooting=false;capy5MoveQueued=false;capy5HP=5;capy5Portals=[];capy5Victory=false;capy5Present=null;shieldUses=3;shieldActive5=false;shieldRechargeEnd=0;swordUses=5;swordSpinActive=false;swordSpinEnd=0;swordSpinHit=false;swordRechargeEnd=0;placeCapy5Enemies();capy5Running=false;tickInterval=setInterval(stepCapy5,parseInt(speedEl.value));drawCapy5();msgEl.textContent='Capy 5 — Arrow keys to move, ESC to return';}
 
-function stepCapy5(){if(!capy5Running||currentScreen!=='capy5')return;if(shieldUses<=0&&Date.now()>=shieldRechargeEnd)shieldUses=3;if(swordUses<=0&&Date.now()>=swordRechargeEnd)swordUses=5;if(swordSpinActive&&Date.now()>=swordSpinEnd){swordSpinActive=false;swordSpinHit=false;}if(swordSpinActive&&capy5Player&&!swordSpinHit){swordSpinHit=true;for(var i=capy5Enemies.length-1;i>=0;i--){var e=capy5Enemies[i];if(Math.abs(e.x-capy5Player.x)<=1&&Math.abs(e.y-capy5Player.y)<=1){e.hp--;if(e.hp<=0){capy5Enemies.splice(i,1);rupees+=1;}}}if(capy5Boss&&Math.abs(capy5Boss.x-capy5Player.x)<=2&&Math.abs(capy5Boss.y-capy5Player.y)<=2){capy5Boss.armor--;if(capy5Boss.armor<=0){capy5Boss=null;rupees+=3;}}}if(!capy5Victory&&capy5Enemies.length===0&&!capy5Boss){capy5Victory=true;capy5Portals=[{x:5,y:Math.floor(ROWS/2),label:'Capy 6',color:'#ff6b6b',dest:'capy6'},{x:10,y:Math.floor(ROWS/2),label:'Capy 7',color:'#ffd93d',dest:'capy7'},{x:15,y:Math.floor(ROWS/2),label:'Capy 8',color:'#6bcb77',dest:'capy8'}];capy5Present={x:capy5Player.x+2,y:capy5Player.y};capy5Present.x=Math.max(0,Math.min(COLS-1,capy5Present.x));}if(!capy5MoveQueued){moveCapy5Enemies();checkCapy5PlayerHits();drawCapy5();return;}capy5MoveQueued=false;dir={x:nextDir.x,y:nextDir.y};capy5Player.facing={x:dir.x,y:dir.y};var nx=capy5Player.x+dir.x*(capy5Victory?1:2),ny=capy5Player.y+dir.y*(capy5Victory?1:2);capy5Player.x=Math.max(0,Math.min(COLS-1,nx));capy5Player.y=Math.max(0,Math.min(ROWS-1,ny));moveCapy5Enemies();checkCapy5PlayerHits();if(!capy5Victory&&capy5Enemies.length===0&&!capy5Boss){capy5Victory=true;capy5Portals=[{x:5,y:Math.floor(ROWS/2),label:'Capy 6',color:'#ff6b6b',dest:'capy6'},{x:10,y:Math.floor(ROWS/2),label:'Capy 7',color:'#ffd93d',dest:'capy7'},{x:15,y:Math.floor(ROWS/2),label:'Capy 8',color:'#6bcb77',dest:'capy8'}];capy5Present={x:capy5Player.x+2,y:capy5Player.y};capy5Present.x=Math.max(0,Math.min(COLS-1,capy5Present.x));}if(capy5Present&&capy5Player&&capy5Player.x===capy5Present.x&&capy5Player.y===capy5Present.y){rupees+=2;msgEl.textContent='+2 rupees!';setTimeout(function(){if(!gameOver)msgEl.textContent='';},1000);capy5Present=null;}if(capy5Victory&&capy5Player){var hitP=capy5Portals.find(function(p){return p.x===capy5Player.x&&p.y===capy5Player.y;});if(hitP){clearInterval(tickInterval);if(hitP.dest==='capy6'){enterCapy6();}else if(hitP.dest==='capy7'){enterCapy7();}else if(hitP.dest==='capy8'){enterCapy8();}else{msgEl.textContent=hitP.label+' — Coming Soon!';}drawCapy5();return;}}drawCapy5();}
+function stepCapy5(){if(!capy5Running||currentScreen!=='capy5')return;if(shieldUses<=0&&Date.now()>=shieldRechargeEnd)shieldUses=3;if(swordUses<=0&&Date.now()>=swordRechargeEnd)swordUses=5;if(swordSpinActive&&Date.now()>=swordSpinEnd){swordSpinActive=false;swordSpinHit=false;}if(swordSpinActive&&capy5Player&&!swordSpinHit){swordSpinHit=true;for(var i=capy5Enemies.length-1;i>=0;i--){var e=capy5Enemies[i];if(Math.abs(e.x-capy5Player.x)<=1&&Math.abs(e.y-capy5Player.y)<=1){e.hp--;if(e.hp<=0){capy5Enemies.splice(i,1);rupees+=1;}}}if(capy5Boss&&Math.abs(capy5Boss.x-capy5Player.x)<=2&&Math.abs(capy5Boss.y-capy5Player.y)<=2){capy5Boss.armor--;if(capy5Boss.armor<=0){capy5Boss=null;rupees+=3;}}}if(!capy5Victory&&capy5Enemies.length===0&&!capy5Boss){capy5Victory=true;capy5Portals=[{x:5,y:Math.floor(ROWS/2),label:'Sloth 1',color:'#ff6b6b',dest:'capy6'},{x:10,y:Math.floor(ROWS/2),label:'Capy 7',color:'#ffd93d',dest:'capy7'},{x:15,y:Math.floor(ROWS/2),label:'Sloth 3',color:'#6bcb77',dest:'capy8'}];capy5Present={x:capy5Player.x+2,y:capy5Player.y};capy5Present.x=Math.max(0,Math.min(COLS-1,capy5Present.x));}if(!capy5MoveQueued){moveCapy5Enemies();checkCapy5PlayerHits();drawCapy5();return;}capy5MoveQueued=false;dir={x:nextDir.x,y:nextDir.y};capy5Player.facing={x:dir.x,y:dir.y};var nx=capy5Player.x+dir.x*(capy5Victory?1:2),ny=capy5Player.y+dir.y*(capy5Victory?1:2);capy5Player.x=Math.max(0,Math.min(COLS-1,nx));capy5Player.y=Math.max(0,Math.min(ROWS-1,ny));moveCapy5Enemies();checkCapy5PlayerHits();if(!capy5Victory&&capy5Enemies.length===0&&!capy5Boss){capy5Victory=true;capy5Portals=[{x:5,y:Math.floor(ROWS/2),label:'Sloth 1',color:'#ff6b6b',dest:'capy6'},{x:10,y:Math.floor(ROWS/2),label:'Capy 7',color:'#ffd93d',dest:'capy7'},{x:15,y:Math.floor(ROWS/2),label:'Sloth 3',color:'#6bcb77',dest:'capy8'}];capy5Present={x:capy5Player.x+2,y:capy5Player.y};capy5Present.x=Math.max(0,Math.min(COLS-1,capy5Present.x));}if(capy5Present&&capy5Player&&capy5Player.x===capy5Present.x&&capy5Player.y===capy5Present.y){rupees+=2;msgEl.textContent='+2 rupees!';setTimeout(function(){if(!gameOver)msgEl.textContent='';},1000);capy5Present=null;}if(capy5Victory&&capy5Player){var hitP=capy5Portals.find(function(p){return p.x===capy5Player.x&&p.y===capy5Player.y;});if(hitP){clearInterval(tickInterval);if(hitP.dest==='capy6'){enterCapy6();}else if(hitP.dest==='capy7'){enterCapy7();}else if(hitP.dest==='capy8'){enterCapy8();}else{msgEl.textContent=hitP.label+' — Coming Soon!';}drawCapy5();return;}}drawCapy5();}
 
 function drawCapy5(){ctx.fillStyle='#0d0a1a';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.strokeStyle='#1a1a30';ctx.lineWidth=0.5;for(var i=0;i<=COLS;i++){ctx.beginPath();ctx.moveTo(i*GRID,0);ctx.lineTo(i*GRID,canvas.height);ctx.stroke();}for(var i2=0;i2<=ROWS;i2++){ctx.beginPath();ctx.moveTo(0,i2*GRID);ctx.lineTo(canvas.width,i2*GRID);ctx.stroke();}ctx.fillStyle='rgba(255,255,255,0.3)';for(var s=0;s<15;s++){var sx2=((s*97+13)%COLS)*GRID+10,sy2=((s*53+7)%ROWS)*GRID+10;ctx.beginPath();ctx.arc(sx2,sy2,1,0,Math.PI*2);ctx.fill();}capy5Portals.forEach(function(p){var px=p.x*GRID,py=p.y*GRID;ctx.shadowColor=p.color;ctx.shadowBlur=10;ctx.fillStyle=p.color;ctx.fillRect(px+2,py+2,GRID-4,GRID-4);ctx.shadowBlur=0;ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.strokeRect(px+2,py+2,GRID-4,GRID-4);ctx.fillStyle='#fff';ctx.font='bold 8px Segoe UI';ctx.textAlign='center';ctx.fillText(p.label,px+GRID/2,py-3);});if(capy5Present){var prx=capy5Present.x*GRID,pry=capy5Present.y*GRID;ctx.fillStyle='#e74c3c';ctx.fillRect(prx+3,pry+5,GRID-6,GRID-8);ctx.fillStyle='#c0392b';ctx.fillRect(prx+GRID/2-1,pry+3,2,GRID-4);ctx.fillRect(prx+3,pry+GRID/2-1,GRID-6,2);ctx.fillStyle='#ffd700';ctx.beginPath();ctx.moveTo(prx+GRID/2-4,pry+4);ctx.lineTo(prx+GRID/2,pry);ctx.lineTo(prx+GRID/2+4,pry+4);ctx.fill();ctx.shadowColor='#ffd700';ctx.shadowBlur=6;ctx.fillStyle='#ffd700';ctx.font='bold 8px Segoe UI';ctx.textAlign='center';ctx.fillText('2R',prx+GRID/2,pry-2);ctx.shadowBlur=0;}capy5Enemies.forEach(function(e){drawRaccoon(e.x*GRID+GRID/2,e.y*GRID+GRID/2);});drawCapy5Boss();if(capy5Player){var px2=capy5Player.x*GRID+GRID/2,py2=capy5Player.y*GRID+GRID/2,f=capy5Player.facing;var shX=px2-f.y*10,shY=py2+f.x*10;ctx.fillStyle='#a0a0d0';ctx.beginPath();ctx.ellipse(shX,shY,5,7,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#9090c0';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(shX,shY,5,7,0,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#d470ff';ctx.beginPath();ctx.arc(shX,shY,2,0,Math.PI*2);ctx.fill();var sbX=px2+f.y*8,sbY=py2-f.x*8,stX=sbX+f.x*14,stY=sbY+f.y*14;ctx.strokeStyle='#e0e0f0';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(sbX,sbY);ctx.lineTo(stX,stY);ctx.stroke();ctx.strokeStyle='#ffd700';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(sbX-f.y*3,sbY+f.x*3);ctx.lineTo(sbX+f.y*3,sbY-f.x*3);ctx.stroke();ctx.strokeStyle='#8B4513';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(sbX,sbY);ctx.lineTo(sbX-f.x*5,sbY-f.y*5);ctx.stroke();ctx.fillStyle='#9b59b6';ctx.beginPath();ctx.arc(px2,py2,7,0,Math.PI*2);ctx.fill();ctx.fillStyle='#7d3c98';ctx.beginPath();ctx.arc(px2-5,py2-6,2.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px2+5,py2-6,2.5,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px2-3,py2-2,1.8,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px2+3,py2-2,1.8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(px2-3,py2-2,0.9,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px2+3,py2-2,0.9,0,Math.PI*2);ctx.fill();ctx.fillStyle='#6c3483';ctx.beginPath();ctx.ellipse(px2,py2+2,2.5,1.5,0,0,Math.PI*2);ctx.fill();}if(shieldActive5&&capy5Player){ctx.strokeStyle='rgba(100,150,255,0.6)';ctx.shadowColor='#6496ff';ctx.shadowBlur=12;ctx.lineWidth=3;ctx.beginPath();ctx.arc(capy5Player.x*GRID+GRID/2,capy5Player.y*GRID+GRID/2,14,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;}if(swordSpinActive&&capy5Player){var px3=capy5Player.x*GRID+GRID/2,py3=capy5Player.y*GRID+GRID/2;var angle=(Date.now()%300)/300*Math.PI*2;
   // Circular slash trail (fading arc)
@@ -593,14 +596,14 @@ function drawCapy5(){ctx.fillStyle='#0d0a1a';ctx.fillRect(0,0,canvas.width,canva
   for(var sp=0;sp<3;sp++){var sa=angle+Math.random()*0.5-0.25;var sd=16+Math.random()*5;ctx.beginPath();ctx.arc(px3+Math.cos(sa)*sd,py3+Math.sin(sa)*sd,1,0,Math.PI*2);ctx.fill();}
 }ctx.fillStyle='#d470ff';ctx.shadowColor='#d470ff';ctx.shadowBlur=15;ctx.font='bold 42px Segoe UI';ctx.textAlign='center';ctx.fillText('Capy 5',canvas.width/2,36);ctx.shadowBlur=0;ctx.textAlign='left';ctx.font='12px Segoe UI';ctx.fillStyle=capy5HP>=4?'#2ecc71':capy5HP>=3?'#f1c40f':'#e74c3c';var hearts='';for(var hi=0;hi<capy5HP;hi++)hearts+='\u2665';for(var hj=0;hj<Math.max(0,5-capy5HP);hj++)hearts+='\u2661';ctx.fillText(hearts,8,canvas.height-44);var shDisp=shieldUses>0?shieldUses:(Date.now()<shieldRechargeEnd?'wait':3);ctx.fillStyle=shieldUses>0?'#6496ff':'#555';ctx.fillText('Shield: '+shDisp,8,canvas.height-28);var swDisp=swordUses>0?swordUses:(Date.now()<swordRechargeEnd?'wait':5);ctx.fillStyle=swordUses>0?'#e0e0f0':'#555';ctx.fillText('Sword: '+swDisp,8,canvas.height-12);ctx.textAlign='center';ctx.fillStyle='#666';ctx.font='14px Segoe UI';ctx.fillText('CapsLock=Shield | Ctrl=Sword | Shift=Super | ESC=return',canvas.width/2,canvas.height-15);}
 
-// === CAPY 6 ===
-var capy6Running=false,capy6CutsceneActive=false,capy6CutsceneFrame=0,capy6KnightX=0;
+// === CAPY 6 (Sloth 1) ===
+var capy6Running=false,capy6CutsceneActive=false,capy6CutsceneFrame=0,capy6KnightX=0,capy6Player=null,capy6MoveQueued=false,sloth1Merchants=[],sloth1RedSloth=null;
 
 function enterCapy6(){
   if(!mainGameState)mainGameState=getGameState();
   currentScreen='capy6';clearInterval(tickInterval);
-  capy6CutsceneActive=true;capy6CutsceneFrame=0;capy6KnightX=0;capy6Running=false;
-  tickInterval=setInterval(stepCapy6,100);drawCapy6();
+  capy6CutsceneActive=true;capy6CutsceneFrame=0;capy6KnightX=0;capy6Running=false;capy6MoveQueued=false;
+  tickInterval=setInterval(stepCapy6,100);
 }
 
 function stepCapy6(){
@@ -608,23 +611,27 @@ function stepCapy6(){
   if(capy6CutsceneActive){
     capy6CutsceneFrame++;
     if(capy6CutsceneFrame<60)capy6KnightX=capy6CutsceneFrame*3;
-    drawCastleCutscene(capy6KnightX,capy6CutsceneFrame,'Capy 6');
-    if(capy6CutsceneFrame>=120){capy6CutsceneActive=false;startCapy6Snake();}
+    drawCastleCutscene(capy6KnightX,capy6CutsceneFrame,'Sloth 1');
+    if(capy6CutsceneFrame>=120){capy6CutsceneActive=false;startCapy6();}
     return;
   }
-  if(!capy6Running)return;
-  dir={x:nextDir.x,y:nextDir.y};
-  var head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
-  if(head.x<0||head.x>=COLS||head.y<0||head.y>=ROWS)return die();
-  if(snake.some(function(s){return s.x===head.x&&s.y===head.y;}))return die();
-  snake.unshift(head);snake.pop();drawCapy6Game();
+  if(!capy6Running||!capy6MoveQueued){drawCapy6Game();return;}
+  capy6MoveQueued=false;
+  var nx=capy6Player.x+nextDir.x,ny=capy6Player.y+nextDir.y;
+  if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS){capy6Player.x=nx;capy6Player.y=ny;}
+  var hitM1=null;sloth1Merchants.forEach(function(m){if(m.x===capy6Player.x&&m.y===capy6Player.y)hitM1=m;});
+  if(hitM1){slothPos=capy6Player;if(hitM1.purple){openBeaverShop();}else if(hitM1.yellow){openGamble();}else if(hitM1.orange){openInfoShop();}else if(hitM1.scam){openScamShop();}else if(hitM1.blue&&isBlueHour()){openBlueShop();}else{openSlothShop();}return;}
+  if(sloth1RedSloth&&capy6Player.x===sloth1RedSloth.x&&capy6Player.y===sloth1RedSloth.y){openPortalShop([{name:'Sloth 2',cost:13,dest:'sloth2'},{name:'Sloth 3',cost:11,dest:'capy8'}]);return;}
+  drawCapy6Game();
 }
 
-function startCapy6Snake(){
-  var mid=Math.floor(ROWS/2);
-  snake=[{x:5,y:mid}];for(var i=1;i<=goldCount+1;i++)snake.push({x:5-i,y:mid});
-  dir={x:1,y:0};nextDir={x:1,y:0};capy6Running=false;
-  drawCapy6Game();msgEl.textContent='Capy 6 — Arrow keys to move, ESC to return';
+function startCapy6(){
+  capy6Player={x:Math.floor(COLS/2),y:Math.floor(ROWS/2)};
+  capy6Running=false;capy6MoveQueued=false;
+  sloth1Merchants=[];
+  for(var si=0;si<7;si++){var sx,sy;do{sx=2+Math.floor(Math.random()*(COLS-4));sy=2+Math.floor(Math.random()*(ROWS-4));}while(sx===capy6Player.x&&sy===capy6Player.y||sloth1Merchants.some(function(m){return m.x===sx&&m.y===sy;}));sloth1Merchants.push({x:sx,y:sy,purple:si===0,blue:si===3,yellow:si===4,orange:si===5,scam:si===6});}
+  var rsx,rsy;do{rsx=2+Math.floor(Math.random()*(COLS-4));rsy=2+Math.floor(Math.random()*(ROWS-4));}while(rsx===capy6Player.x&&rsy===capy6Player.y||sloth1Merchants.some(function(m){return m.x===rsx&&m.y===rsy;}));sloth1RedSloth={x:rsx,y:rsy};
+  drawCapy6Game();msgEl.textContent='Sloth 1 — Arrow keys to move, ESC to return';
 }
 
 function drawCapy6Game(){
@@ -632,19 +639,29 @@ function drawCapy6Game(){
   ctx.strokeStyle='#2e1a1a';ctx.lineWidth=0.5;
   for(var i=0;i<=COLS;i++){ctx.beginPath();ctx.moveTo(i*GRID,0);ctx.lineTo(i*GRID,canvas.height);ctx.stroke();}
   for(var i2=0;i2<=ROWS;i2++){ctx.beginPath();ctx.moveTo(0,i2*GRID);ctx.lineTo(canvas.width,i2*GRID);ctx.stroke();}
-  snake.forEach(function(seg,i){var sx=seg.x*GRID,sy=seg.y*GRID;if(i===0){var cx=sx+GRID/2,cy=sy+GRID/2;ctx.fillStyle='#3b2314';ctx.beginPath();ctx.arc(cx,cy-2,9,Math.PI,0);ctx.fill();ctx.fillStyle='#f5cba7';ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#3b2314';ctx.beginPath();ctx.ellipse(cx,cy-6,8,4,0,0,Math.PI);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx-3,cy-1,2.2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(cx+3,cy-1,2.2,0,Math.PI*2);ctx.fill();ctx.fillStyle='#2c3e50';ctx.beginPath();ctx.arc(cx-3,cy-1,1.2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(cx+3,cy-1,1.2,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#c0392b';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy+2,3,0.1*Math.PI,0.9*Math.PI);ctx.stroke();}else{var isG=i<=goldCount;var cx2=sx+GRID/2,cy2=sy+GRID/2;ctx.fillStyle=isG?'#ffd700':'#8B6914';ctx.beginPath();ctx.arc(cx2,cy2,8,0,Math.PI*2);ctx.fill();ctx.fillStyle=isG?'#daa520':'#6B4F10';ctx.beginPath();ctx.arc(cx2-5,cy2-7,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(cx2+5,cy2-7,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(cx2-3,cy2-2,1.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(cx2+3,cy2-2,1.5,0,Math.PI*2);ctx.fill();ctx.fillStyle=isG?'#b8860b':'#5a3e1b';ctx.beginPath();ctx.ellipse(cx2,cy2+3,3,2,0,0,Math.PI*2);ctx.fill();}});
-  ctx.fillStyle='#ff6b6b';ctx.shadowColor='#ff6b6b';ctx.shadowBlur=15;ctx.font='bold 42px Segoe UI';ctx.textAlign='center';ctx.fillText('Capy 6',canvas.width/2,36);ctx.shadowBlur=0;
+  if(capy6Player){
+    var px=capy6Player.x*GRID+GRID/2,py=capy6Player.y*GRID+GRID/2;
+    ctx.fillStyle='#f5cba7';ctx.beginPath();ctx.arc(px,py,7,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#3b2314';ctx.beginPath();ctx.ellipse(px,py-5,7,3.5,0,0,Math.PI);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px-2.5,py-2,1.8,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px+2.5,py-2,1.8,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#4a6a3a';ctx.beginPath();ctx.arc(px-2.5,py-2,0.9,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px+2.5,py-2,0.9,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#c07060';ctx.lineWidth=0.8;ctx.beginPath();ctx.arc(px,py+1,2,0.1*Math.PI,0.9*Math.PI);ctx.stroke();
+    ctx.fillStyle='#5b7daa';ctx.beginPath();ctx.ellipse(px,py+8,5,5,0,0,Math.PI*2);ctx.fill();
+  }
+  sloth1Merchants.forEach(function(m){if(m.purple)drawPurpleSloth(m.x,m.y);else if(m.yellow)drawYellowSloth(m.x,m.y);else if(m.orange)drawOrangeSloth(m.x,m.y);else if(m.scam)drawScamSloth(m.x,m.y);else if(m.blue&&isBlueHour())drawBlueSloth(m.x,m.y);else drawSloth(m.x,m.y);});
+  if(sloth1RedSloth)drawRedSloth(sloth1RedSloth.x,sloth1RedSloth.y);
+  ctx.fillStyle='#ff6b6b';ctx.shadowColor='#ff6b6b';ctx.shadowBlur=15;ctx.font='bold 42px Segoe UI';ctx.textAlign='center';ctx.fillText('Sloth 1',canvas.width/2,36);ctx.shadowBlur=0;
   ctx.fillStyle='#666';ctx.font='14px Segoe UI';ctx.fillText('Coming Soon — Press ESC to return',canvas.width/2,canvas.height-15);
 }
 
-// === CAPY 8 ===
-var capy8Running=false,capy8CutsceneActive=false,capy8CutsceneFrame=0,capy8KnightX=0;
+// === CAPY 8 (Sloth 3) ===
+var capy8Running=false,capy8CutsceneActive=false,capy8CutsceneFrame=0,capy8KnightX=0,capy8Player=null,capy8MoveQueued=false,sloth3Merchants=[],sloth3RedSloth=null;
 
 function enterCapy8(){
   if(!mainGameState)mainGameState=getGameState();
   currentScreen='capy8';clearInterval(tickInterval);
-  capy8CutsceneActive=true;capy8CutsceneFrame=0;capy8KnightX=0;capy8Running=false;
-  tickInterval=setInterval(stepCapy8,100);drawCapy8();
+  capy8CutsceneActive=true;capy8CutsceneFrame=0;capy8KnightX=0;capy8Running=false;capy8MoveQueued=false;
+  tickInterval=setInterval(stepCapy8,100);
 }
 
 function stepCapy8(){
@@ -652,23 +669,27 @@ function stepCapy8(){
   if(capy8CutsceneActive){
     capy8CutsceneFrame++;
     if(capy8CutsceneFrame<60)capy8KnightX=capy8CutsceneFrame*3;
-    drawCastleCutscene(capy8KnightX,capy8CutsceneFrame,'Capy 8');
-    if(capy8CutsceneFrame>=120){capy8CutsceneActive=false;startCapy8Snake();}
+    drawCastleCutscene(capy8KnightX,capy8CutsceneFrame,'Sloth 3');
+    if(capy8CutsceneFrame>=120){capy8CutsceneActive=false;startCapy8();}
     return;
   }
-  if(!capy8Running)return;
-  dir={x:nextDir.x,y:nextDir.y};
-  var head={x:snake[0].x+dir.x,y:snake[0].y+dir.y};
-  if(head.x<0||head.x>=COLS||head.y<0||head.y>=ROWS)return die();
-  if(snake.some(function(s){return s.x===head.x&&s.y===head.y;}))return die();
-  snake.unshift(head);snake.pop();drawCapy8Game();
+  if(!capy8Running||!capy8MoveQueued){drawCapy8Game();return;}
+  capy8MoveQueued=false;
+  var nx=capy8Player.x+nextDir.x,ny=capy8Player.y+nextDir.y;
+  if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS){capy8Player.x=nx;capy8Player.y=ny;}
+  var hitM3=null;sloth3Merchants.forEach(function(m){if(m.x===capy8Player.x&&m.y===capy8Player.y)hitM3=m;});
+  if(hitM3){slothPos=capy8Player;if(hitM3.purple){openBeaverShop();}else if(hitM3.yellow){openGamble();}else if(hitM3.orange){openInfoShop();}else if(hitM3.scam){openScamShop();}else if(hitM3.blue&&isBlueHour()){openBlueShop();}else{openSlothShop();}return;}
+  if(sloth3RedSloth&&capy8Player.x===sloth3RedSloth.x&&capy8Player.y===sloth3RedSloth.y){openPortalShop([{name:'Sloth 1',cost:11,dest:'capy6'},{name:'Sloth 2',cost:13,dest:'sloth2'}]);return;}
+  drawCapy8Game();
 }
 
-function startCapy8Snake(){
-  var mid=Math.floor(ROWS/2);
-  snake=[{x:5,y:mid}];for(var i=1;i<=goldCount+1;i++)snake.push({x:5-i,y:mid});
-  dir={x:1,y:0};nextDir={x:1,y:0};capy8Running=false;
-  drawCapy8Game();msgEl.textContent='Capy 8 — Arrow keys to move, ESC to return';
+function startCapy8(){
+  capy8Player={x:Math.floor(COLS/2),y:Math.floor(ROWS/2)};
+  capy8Running=false;capy8MoveQueued=false;
+  sloth3Merchants=[];
+  for(var si=0;si<7;si++){var sx,sy;do{sx=2+Math.floor(Math.random()*(COLS-4));sy=2+Math.floor(Math.random()*(ROWS-4));}while(sx===capy8Player.x&&sy===capy8Player.y||sloth3Merchants.some(function(m){return m.x===sx&&m.y===sy;}));sloth3Merchants.push({x:sx,y:sy,purple:si===0,blue:si===3,yellow:si===4,orange:si===5,scam:si===6});}
+  var rsx2,rsy2;do{rsx2=2+Math.floor(Math.random()*(COLS-4));rsy2=2+Math.floor(Math.random()*(ROWS-4));}while(rsx2===capy8Player.x&&rsy2===capy8Player.y||sloth3Merchants.some(function(m){return m.x===rsx2&&m.y===rsy2;}));sloth3RedSloth={x:rsx2,y:rsy2};
+  drawCapy8Game();msgEl.textContent='Sloth 3 — Arrow keys to move, ESC to return';
 }
 
 function drawCapy8Game(){
@@ -676,28 +697,181 @@ function drawCapy8Game(){
   ctx.strokeStyle='#1a2e1a';ctx.lineWidth=0.5;
   for(var i=0;i<=COLS;i++){ctx.beginPath();ctx.moveTo(i*GRID,0);ctx.lineTo(i*GRID,canvas.height);ctx.stroke();}
   for(var i2=0;i2<=ROWS;i2++){ctx.beginPath();ctx.moveTo(0,i2*GRID);ctx.lineTo(canvas.width,i2*GRID);ctx.stroke();}
-  snake.forEach(function(seg,i){var sx=seg.x*GRID,sy=seg.y*GRID;if(i===0){var cx=sx+GRID/2,cy=sy+GRID/2;ctx.fillStyle='#3b2314';ctx.beginPath();ctx.arc(cx,cy-2,9,Math.PI,0);ctx.fill();ctx.fillStyle='#f5cba7';ctx.beginPath();ctx.arc(cx,cy,8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#3b2314';ctx.beginPath();ctx.ellipse(cx,cy-6,8,4,0,0,Math.PI);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(cx-3,cy-1,2.2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(cx+3,cy-1,2.2,0,Math.PI*2);ctx.fill();ctx.fillStyle='#2c3e50';ctx.beginPath();ctx.arc(cx-3,cy-1,1.2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(cx+3,cy-1,1.2,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#c0392b';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy+2,3,0.1*Math.PI,0.9*Math.PI);ctx.stroke();}else{var isG=i<=goldCount;var cx2=sx+GRID/2,cy2=sy+GRID/2;ctx.fillStyle=isG?'#ffd700':'#8B6914';ctx.beginPath();ctx.arc(cx2,cy2,8,0,Math.PI*2);ctx.fill();ctx.fillStyle=isG?'#daa520':'#6B4F10';ctx.beginPath();ctx.arc(cx2-5,cy2-7,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(cx2+5,cy2-7,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(cx2-3,cy2-2,1.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(cx2+3,cy2-2,1.5,0,Math.PI*2);ctx.fill();ctx.fillStyle=isG?'#b8860b':'#5a3e1b';ctx.beginPath();ctx.ellipse(cx2,cy2+3,3,2,0,0,Math.PI*2);ctx.fill();}});
-  ctx.fillStyle='#6bcb77';ctx.shadowColor='#6bcb77';ctx.shadowBlur=15;ctx.font='bold 42px Segoe UI';ctx.textAlign='center';ctx.fillText('Capy 8',canvas.width/2,36);ctx.shadowBlur=0;
+  if(capy8Player){
+    var px=capy8Player.x*GRID+GRID/2,py=capy8Player.y*GRID+GRID/2;
+    ctx.fillStyle='#f5cba7';ctx.beginPath();ctx.arc(px,py,7,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#3b2314';ctx.beginPath();ctx.ellipse(px,py-5,7,3.5,0,0,Math.PI);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px-2.5,py-2,1.8,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px+2.5,py-2,1.8,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#4a6a3a';ctx.beginPath();ctx.arc(px-2.5,py-2,0.9,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px+2.5,py-2,0.9,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#c07060';ctx.lineWidth=0.8;ctx.beginPath();ctx.arc(px,py+1,2,0.1*Math.PI,0.9*Math.PI);ctx.stroke();
+    ctx.fillStyle='#5b7daa';ctx.beginPath();ctx.ellipse(px,py+8,5,5,0,0,Math.PI*2);ctx.fill();
+  }
+  sloth3Merchants.forEach(function(m){if(m.purple)drawPurpleSloth(m.x,m.y);else if(m.yellow)drawYellowSloth(m.x,m.y);else if(m.orange)drawOrangeSloth(m.x,m.y);else if(m.scam)drawScamSloth(m.x,m.y);else if(m.blue&&isBlueHour())drawBlueSloth(m.x,m.y);else drawSloth(m.x,m.y);});
+  if(sloth3RedSloth)drawRedSloth(sloth3RedSloth.x,sloth3RedSloth.y);
+  ctx.fillStyle='#6bcb77';ctx.shadowColor='#6bcb77';ctx.shadowBlur=15;ctx.font='bold 42px Segoe UI';ctx.textAlign='center';ctx.fillText('Sloth 3',canvas.width/2,36);ctx.shadowBlur=0;
   ctx.fillStyle='#666';ctx.font='14px Segoe UI';ctx.fillText('Coming Soon — Press ESC to return',canvas.width/2,canvas.height-15);
 }
 
 // Shared castle cutscene for Capy 6/8
 function drawCastleCutscene(knightX,frame,title){
-  ctx.fillStyle='#87CEEB';ctx.fillRect(0,0,canvas.width,canvas.height*0.4);
-  ctx.fillStyle='#2ecc71';ctx.fillRect(0,canvas.height*0.4,canvas.width,canvas.height*0.6);
-  ctx.fillStyle='#c0a882';ctx.fillRect(300,canvas.height*0.25,60,canvas.height*0.2);
-  ctx.fillStyle='#a08862';ctx.fillRect(310,canvas.height*0.18,15,30);ctx.fillRect(340,canvas.height*0.18,15,30);
-  ctx.fillStyle='#9b59b6';ctx.fillRect(313,canvas.height*0.14,10,8);ctx.fillRect(343,canvas.height*0.14,10,8);
-  var kx=Math.min(knightX,280);
-  ctx.fillStyle='#9b59b6';ctx.beginPath();ctx.arc(kx+20,canvas.height*0.38,10,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#7d3c98';ctx.beginPath();ctx.arc(kx+16,canvas.height*0.38-8,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(kx+24,canvas.height*0.38-8,3,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(kx+18,canvas.height*0.38-3,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(kx+22,canvas.height*0.38-3,2,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#111';ctx.beginPath();ctx.arc(kx+18,canvas.height*0.38-3,1,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(kx+22,canvas.height*0.38-3,1,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='#9a8aba';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(kx+20,canvas.height*0.38,12,0,Math.PI*2);ctx.stroke();
+  // Sky gradient
+  var skyGrad=ctx.createLinearGradient(0,0,0,canvas.height*0.4);
+  skyGrad.addColorStop(0,'#4a90d9');skyGrad.addColorStop(1,'#87CEEB');
+  ctx.fillStyle=skyGrad;ctx.fillRect(0,0,canvas.width,canvas.height*0.4);
+  // Clouds
+  ctx.fillStyle='rgba(255,255,255,0.6)';
+  ctx.beginPath();ctx.arc(80,50,15,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(98,45,18,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(115,50,14,0,Math.PI*2);ctx.fill();
+  // Ground
+  var groundGrad=ctx.createLinearGradient(0,canvas.height*0.4,0,canvas.height);
+  groundGrad.addColorStop(0,'#3ecc71');groundGrad.addColorStop(1,'#1a9956');
+  ctx.fillStyle=groundGrad;ctx.fillRect(0,canvas.height*0.4,canvas.width,canvas.height*0.6);
+  // Path
+  ctx.fillStyle='#d4a86a';ctx.beginPath();ctx.moveTo(0,canvas.height*0.45);ctx.lineTo(330,canvas.height*0.45);ctx.lineTo(330,canvas.height*0.5);ctx.lineTo(0,canvas.height*0.5);ctx.fill();
+  // Castle - detailed
+  ctx.fillStyle='#d4b896';ctx.fillRect(295,canvas.height*0.2,70,canvas.height*0.25);
+  ctx.fillStyle='#c0a882';ctx.fillRect(305,canvas.height*0.12,20,40);ctx.fillRect(345,canvas.height*0.12,20,40);
+  // Battlements
+  ctx.fillStyle='#b89a78';for(var bi=0;bi<4;bi++)ctx.fillRect(297+bi*18,canvas.height*0.195,7,10);
+  // Tower tops
+  ctx.fillStyle='#9b59b6';
+  ctx.beginPath();ctx.moveTo(305,canvas.height*0.12);ctx.lineTo(315,canvas.height*0.06);ctx.lineTo(325,canvas.height*0.12);ctx.fill();
+  ctx.beginPath();ctx.moveTo(345,canvas.height*0.12);ctx.lineTo(355,canvas.height*0.06);ctx.lineTo(365,canvas.height*0.12);ctx.fill();
+  // Flags
+  ctx.fillStyle='#9b59b6';ctx.fillRect(313,canvas.height*0.04,10,8);ctx.fillRect(353,canvas.height*0.04,10,8);
+  // Castle windows
+  ctx.fillStyle='rgba(255,200,100,0.4)';ctx.fillRect(315,canvas.height*0.28,10,12);ctx.fillRect(340,canvas.height*0.28,10,12);
+  // Castle door
+  ctx.fillStyle='#6b4f3a';ctx.beginPath();ctx.arc(330,canvas.height*0.42,12,Math.PI,0);ctx.fill();ctx.fillRect(318,canvas.height*0.42,24,8);
+  // Knight capybara - larger, more detailed
+  var kx=Math.min(knightX,275);
+  var ky=canvas.height*0.42;
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.2)';ctx.beginPath();ctx.ellipse(kx+25,ky+22,18,5,0,0,Math.PI*2);ctx.fill();
+  // Back legs (behind body)
+  var legOff=frame%10<5?3:-3;
+  ctx.fillStyle='#7d3c98';
+  ctx.beginPath();ctx.ellipse(kx+15,ky+16+legOff,3,6,-0.1,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(kx+35,ky+16-legOff,3,6,0.1,0,Math.PI*2);ctx.fill();
+  // Tail (small stub)
+  ctx.fillStyle='#7d3c98';ctx.beginPath();ctx.ellipse(kx+6,ky+4,4,3,0.5,0,Math.PI*2);ctx.fill();
+  // Body with armor (wider oval)
+  var armorGrad=ctx.createRadialGradient(kx+25,ky+2,4,kx+25,ky+2,18);
+  armorGrad.addColorStop(0,'#9a8aba');armorGrad.addColorStop(0.5,'#7a6a9a');armorGrad.addColorStop(1,'#5a4a7a');
+  ctx.fillStyle=armorGrad;ctx.beginPath();ctx.ellipse(kx+25,ky+4,16,12,0,0,Math.PI*2);ctx.fill();
+  // Armor details - plate lines
+  ctx.strokeStyle='rgba(180,160,200,0.3)';ctx.lineWidth=0.5;
+  ctx.beginPath();ctx.moveTo(kx+12,ky+4);ctx.lineTo(kx+38,ky+4);ctx.stroke();
+  // Armor rivets
+  ctx.fillStyle='#b0a0c0';
+  ctx.beginPath();ctx.arc(kx+15,ky,1.5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(kx+35,ky,1.5,0,Math.PI*2);ctx.fill();
+  // Front legs
+  ctx.fillStyle='#7d3c98';
+  ctx.beginPath();ctx.ellipse(kx+18,ky+16-legOff,3,6,-0.1,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(kx+32,ky+16+legOff,3,6,0.1,0,Math.PI*2);ctx.fill();
+  // Paws
+  ctx.fillStyle='#6a2e88';
+  ctx.beginPath();ctx.ellipse(kx+18,ky+21-legOff,3.5,2,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(kx+32,ky+21+legOff,3.5,2,0,0,Math.PI*2);ctx.fill();
+  // Head (larger)
+  ctx.fillStyle='#9b59b6';ctx.beginPath();ctx.arc(kx+30,ky-8,12,0,Math.PI*2);ctx.fill();
+  // Lighter face/cheeks
+  ctx.fillStyle='#b07acc';ctx.beginPath();ctx.ellipse(kx+32,ky-4,8,5,0,0,Math.PI*2);ctx.fill();
+  // Ears
+  ctx.fillStyle='#7d3c98';
+  ctx.beginPath();ctx.ellipse(kx+21,ky-18,4,5,-0.3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(kx+39,ky-18,4,5,0.3,0,Math.PI*2);ctx.fill();
+  // Inner ears
+  ctx.fillStyle='#c8a0d8';
+  ctx.beginPath();ctx.ellipse(kx+21,ky-18,2,3,-0.3,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(kx+39,ky-18,2,3,0.3,0,Math.PI*2);ctx.fill();
+  // Eyes (larger, more expressive)
+  ctx.fillStyle='#1a1008';
+  ctx.beginPath();ctx.ellipse(kx+26,ky-10,2.5,3,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(kx+34,ky-10,2.5,3,0,0,Math.PI*2);ctx.fill();
+  // Eye shine
+  ctx.fillStyle='rgba(255,255,255,0.7)';
+  ctx.beginPath();ctx.arc(kx+27,ky-11.5,1,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(kx+35,ky-11.5,1,0,Math.PI*2);ctx.fill();
+  // Nose (wide, flat capybara nose)
+  ctx.fillStyle='#5a3070';ctx.beginPath();ctx.ellipse(kx+32,ky-4,5,3,0,0,Math.PI*2);ctx.fill();
+  // Nostrils
+  ctx.fillStyle='#3a1a50';
+  ctx.beginPath();ctx.ellipse(kx+30,ky-4,1.2,0.8,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(kx+34,ky-4,1.2,0.8,0,0,Math.PI*2);ctx.fill();
+  // Mouth
+  ctx.strokeStyle='#5a3070';ctx.lineWidth=0.6;
+  ctx.beginPath();ctx.moveTo(kx+29,ky-1);ctx.quadraticCurveTo(kx+32,ky+1,kx+35,ky-1);ctx.stroke();
+  // Whisker dots
+  ctx.fillStyle='#5a3070';
+  ctx.beginPath();ctx.arc(kx+24,ky-4,0.6,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(kx+23,ky-2.5,0.6,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(kx+40,ky-4,0.6,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(kx+41,ky-2.5,0.6,0,Math.PI*2);ctx.fill();
+  // Armor shine ring
+  ctx.strokeStyle='rgba(180,160,220,0.4)';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(kx+25,ky+4,17,13,0,0,Math.PI*2);ctx.stroke();
+  // Purple glow
+  ctx.shadowColor='#9b59b6';ctx.shadowBlur=10;ctx.strokeStyle='rgba(155,89,182,0.2)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(kx+25,ky+2,20,16,0,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;
+  // Text
   ctx.fillStyle='#2c3e50';ctx.font='bold 16px Segoe UI';ctx.textAlign='center';
-  if(frame<60){ctx.fillText('The knight reaches the castle...',canvas.width/2,40);}
-  else{ctx.fillText('"I will wait here for my fellow knights."',canvas.width/2,40);ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(kx+20,canvas.height*0.38-30,80,15,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#333';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(kx+20,canvas.height*0.38-30,80,15,0,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#333';ctx.font='10px Segoe UI';ctx.fillText('I will wait here for my fellow knights.',kx+20,canvas.height*0.38-27);}
+  if(frame<60){ctx.fillText('The knight reaches the castle...',canvas.width/2,30);}
+  else{
+    ctx.fillText('"I will wait here for my fellow knights."',canvas.width/2,30);
+    // Speech bubble
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.ellipse(kx+25,ky-35,85,16,0,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#333';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(kx+25,ky-35,85,16,0,0,Math.PI*2);ctx.stroke();
+    // Bubble tail
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(kx+25,ky-19);ctx.lineTo(kx+21,ky-27);ctx.lineTo(kx+29,ky-27);ctx.fill();
+    ctx.fillStyle='#333';ctx.font='10px Segoe UI';ctx.fillText('I will wait here for my fellow knights.',kx+25,ky-32);
+  }
   ctx.fillStyle='#555';ctx.font='12px Segoe UI';ctx.fillText(title+' — Press X to skip',canvas.width/2,canvas.height-15);
+}
+
+// === SLOTH 2 ===
+var sloth2Running=false,sloth2Player=null,sloth2MoveQueued=false,sloth2Merchants=[],sloth2RedSloth=null;
+
+function enterSloth2(){
+  if(!mainGameState)mainGameState=getGameState();
+  currentScreen='sloth2';clearInterval(tickInterval);
+  sloth2Player={x:Math.floor(COLS/2),y:Math.floor(ROWS/2)};
+  sloth2Running=false;sloth2MoveQueued=false;
+  sloth2Merchants=[];
+  for(var si=0;si<7;si++){var sx,sy;do{sx=2+Math.floor(Math.random()*(COLS-4));sy=2+Math.floor(Math.random()*(ROWS-4));}while(sx===sloth2Player.x&&sy===sloth2Player.y||sloth2Merchants.some(function(m){return m.x===sx&&m.y===sy;}));sloth2Merchants.push({x:sx,y:sy,discount:si===0,purple:si===1,blue:si===3,yellow:si===4,orange:si===5,scam:si===6});}
+  var rsx3,rsy3;do{rsx3=2+Math.floor(Math.random()*(COLS-4));rsy3=2+Math.floor(Math.random()*(ROWS-4));}while(rsx3===sloth2Player.x&&rsy3===sloth2Player.y||sloth2Merchants.some(function(m){return m.x===rsx3&&m.y===rsy3;}));sloth2RedSloth={x:rsx3,y:rsy3};
+  tickInterval=setInterval(stepSloth2,100);
+  drawSloth2();msgEl.textContent='Sloth 2 — Arrow keys to move, ESC to return';
+}
+
+function stepSloth2(){
+  if(currentScreen!=='sloth2')return;
+  if(!sloth2Running||!sloth2MoveQueued){drawSloth2();return;}
+  sloth2MoveQueued=false;
+  var nx=sloth2Player.x+nextDir.x,ny=sloth2Player.y+nextDir.y;
+  if(nx>=0&&nx<COLS&&ny>=0&&ny<ROWS){sloth2Player.x=nx;sloth2Player.y=ny;}
+  var hitMerchant=null;sloth2Merchants.forEach(function(m){if(m.x===sloth2Player.x&&m.y===sloth2Player.y)hitMerchant=m;});
+  if(hitMerchant){slothPos=sloth2Player;if(hitMerchant.purple){openBeaverShop();}else if(hitMerchant.yellow){openGamble();}else if(hitMerchant.orange){openInfoShop();}else if(hitMerchant.scam){openScamShop();}else if(hitMerchant.blue&&isBlueHour()){openBlueShop();}else if(hitMerchant.discount){openDiscountShop();}else{openSlothShop();}return;}
+  if(sloth2RedSloth&&sloth2Player.x===sloth2RedSloth.x&&sloth2Player.y===sloth2RedSloth.y){openPortalShop([{name:'Sloth 1',cost:11,dest:'capy6'},{name:'Sloth 3',cost:11,dest:'capy8'},{name:'Capy 3',cost:11,dest:'capy3'}]);return;}
+  drawSloth2();
+}
+
+function drawSloth2(){
+  ctx.fillStyle='#0a0f1a';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.strokeStyle='#1a2530';ctx.lineWidth=0.5;
+  for(var i=0;i<=COLS;i++){ctx.beginPath();ctx.moveTo(i*GRID,0);ctx.lineTo(i*GRID,canvas.height);ctx.stroke();}
+  for(var i2=0;i2<=ROWS;i2++){ctx.beginPath();ctx.moveTo(0,i2*GRID);ctx.lineTo(canvas.width,i2*GRID);ctx.stroke();}
+  if(sloth2Player){
+    var px=sloth2Player.x*GRID+GRID/2,py=sloth2Player.y*GRID+GRID/2;
+    ctx.fillStyle='#f5cba7';ctx.beginPath();ctx.arc(px,py,7,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#3b2314';ctx.beginPath();ctx.ellipse(px,py-5,7,3.5,0,0,Math.PI);ctx.fill();
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px-2.5,py-2,1.8,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px+2.5,py-2,1.8,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#4a6a3a';ctx.beginPath();ctx.arc(px-2.5,py-2,0.9,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px+2.5,py-2,0.9,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle='#c07060';ctx.lineWidth=0.8;ctx.beginPath();ctx.arc(px,py+1,2,0.1*Math.PI,0.9*Math.PI);ctx.stroke();
+    ctx.fillStyle='#5b7daa';ctx.beginPath();ctx.ellipse(px,py+8,5,5,0,0,Math.PI*2);ctx.fill();
+  }
+  sloth2Merchants.forEach(function(m){if(m.purple)drawPurpleSloth(m.x,m.y);else if(m.yellow)drawYellowSloth(m.x,m.y);else if(m.orange)drawOrangeSloth(m.x,m.y);else if(m.scam)drawScamSloth(m.x,m.y);else if(m.blue&&isBlueHour())drawBlueSloth(m.x,m.y);else if(m.discount)drawGreenSloth(m.x,m.y);else drawSloth(m.x,m.y);});
+  if(sloth2RedSloth)drawRedSloth(sloth2RedSloth.x,sloth2RedSloth.y);
+  ctx.fillStyle='#3498db';ctx.shadowColor='#3498db';ctx.shadowBlur=15;ctx.font='bold 42px Segoe UI';ctx.textAlign='center';ctx.fillText('Sloth 2',canvas.width/2,36);ctx.shadowBlur=0;
+  ctx.fillStyle='#666';ctx.font='14px Segoe UI';ctx.fillText('Coming Soon — Press ESC to return',canvas.width/2,canvas.height-15);
 }
 
 // === CAPY 7 ===
@@ -737,14 +911,22 @@ function stepCapy7(){
   // Check if player is on a log (moves with it)
   if(capy7Player.y>=C7_WATER_START&&capy7Player.y<=C7_WATER_END){
     var onLog=false;
-    capy7Logs.forEach(function(l){if(l.y===capy7Player.y&&capy7Player.x>=Math.floor(l.x)&&capy7Player.x<Math.floor(l.x)+l.len){onLog=true;capy7Player.x+=l.speed*0.15;}});
+    var px=capy7Player.x;
+    capy7Logs.forEach(function(l){
+      if(l.y===capy7Player.y&&px>=l.x-0.5&&px<l.x+l.len+0.5){
+        onLog=true;
+        capy7Player.x+=l.speed*0.15;
+      }
+    });
+    // Round player position to prevent drift
+    capy7Player.x=Math.round(capy7Player.x*100)/100;
     if(!onLog)die();
-    if(capy7Player.x<0||capy7Player.x>=COLS)die();
+    if(capy7Player.x<-1||capy7Player.x>=COLS+1)die();
   }
   // Check win
   if(capy7Player.y<=C7_ISLAND_TOP){capy7Won=true;capy7CutsceneActive=true;capy7CutsceneFrame=0;capy7KnightX=0;}
   // Check sloth
-  if(slothPos&&Math.floor(capy7Player.x)===slothPos.x&&capy7Player.y===slothPos.y){openSlothShop();return;}
+  if(slothPos&&Math.abs(capy7Player.x-slothPos.x)<1&&capy7Player.y===slothPos.y){openSlothShop();return;}
   drawCapy7();
 }
 
@@ -752,7 +934,7 @@ function stepCapy7Cutscene(){
   capy7CutsceneFrame++;
   if(capy7CutsceneFrame<60){capy7KnightX=capy7CutsceneFrame*3;}
   drawCapy7Cutscene();
-  if(capy7CutsceneFrame>=120){clearInterval(tickInterval);msgEl.textContent='Press ESC to return';}
+  if(capy7CutsceneFrame>=120){clearInterval(tickInterval);enterSloth2();}
 }
 
 function drawCapy7(){
@@ -796,7 +978,7 @@ function drawCapy7(){
   if(slothPos)drawSloth(slothPos.x,slothPos.y);
   // Player (purple knight without weapons)
   if(capy7Player){
-    var px=Math.floor(capy7Player.x)*GRID+GRID/2,py=capy7Player.y*cellH+cellH/2;
+    var px=capy7Player.x*GRID+GRID/2,py=capy7Player.y*cellH+cellH/2;
     ctx.fillStyle='#9b59b6';ctx.beginPath();ctx.arc(px,py,7,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#7d3c98';ctx.beginPath();ctx.arc(px-4,py-5,2,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px+4,py-5,2,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(px-2.5,py-2,1.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px+2.5,py-2,1.5,0,Math.PI*2);ctx.fill();
@@ -844,6 +1026,9 @@ function drawCapy7Cutscene(){
 var slothShopOpen=false;
 var slothPos=null;
 var slothShopSelection=1;
+var slothShopDiscount=false;
+var slothShopBeaver=false;
+var slothShopBlue=false;
 
 function placeSloth(){
   if(!snake||snake.length===0)return null;
@@ -886,8 +1071,579 @@ function drawSloth(sx,sy){
   ctx.fillText('SHOP',px,py-15);
 }
 
+function drawRedSloth(sx,sy){
+  var px=sx*GRID+GRID/2,py=sy*GRID+GRID/2;
+  ctx.fillStyle='#a04040';ctx.beginPath();ctx.ellipse(px,py+2,8,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#b06060';ctx.beginPath();ctx.ellipse(px,py+4,5,5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#a04040';ctx.beginPath();ctx.arc(px,py-6,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#702020';
+  ctx.beginPath();ctx.ellipse(px-3,py-6,3,2.5,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+3,py-6,3,2.5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#111';
+  ctx.beginPath();ctx.ellipse(px-3,py-6,1.5,0.8,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+3,py-6,1.5,0.8,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#702020';ctx.lineWidth=0.7;ctx.beginPath();ctx.arc(px,py-3,2.5,0.1*Math.PI,0.9*Math.PI);ctx.stroke();
+  ctx.fillStyle='#501010';ctx.beginPath();ctx.arc(px,py-4,1.2,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#a04040';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(px-7,py);ctx.quadraticCurveTo(px-14,py-5,px-12,py-10);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px+7,py);ctx.quadraticCurveTo(px+14,py-5,px+12,py-10);ctx.stroke();
+  ctx.strokeStyle='#602020';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(px-12,py-10);ctx.lineTo(px-14,py-12);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px-12,py-10);ctx.lineTo(px-11,py-13);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px+12,py-10);ctx.lineTo(px+14,py-12);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px+12,py-10);ctx.lineTo(px+11,py-13);ctx.stroke();
+  ctx.fillStyle='#ff4757';ctx.font='bold 8px Segoe UI';ctx.textAlign='center';
+  ctx.fillText('PORTAL',px,py-15);
+}
+
+var portalShopOpen=false,portalShopSelection=1,portalShopItems=[],portalShopMsg2='';
+
+function openPortalShop(items){
+  portalShopOpen=true;portalShopSelection=1;portalShopItems=items;portalShopMsg2='';
+  clearInterval(tickInterval);drawPortalShop();
+}
+
+function drawPortalShop(){
+  ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.textAlign='center';
+  ctx.fillStyle='#ff4757';ctx.font='bold 24px Segoe UI';ctx.fillText('Portal Shop',canvas.width/2,40);
+  ctx.fillStyle='#2ecc71';ctx.font='16px Segoe UI';ctx.fillText('Rupees: '+rupees,canvas.width/2,70);
+  portalShopItems.forEach(function(item,i){
+    var y=110+i*70;var num=i+1;var canBuy=rupees>=item.cost;var selected=portalShopSelection===num;
+    ctx.fillStyle=selected?(canBuy?'#1a2a2a':'#2a1a1a'):(canBuy?'#1a1a2a':'#1a1a1a');
+    ctx.fillRect(60,y-15,280,50);
+    ctx.strokeStyle=selected?'#ff4757':(canBuy?'#2ecc71':'#333');ctx.lineWidth=selected?2:1;
+    ctx.strokeRect(60,y-15,280,50);
+    if(selected){ctx.fillStyle='#ff4757';ctx.font='bold 16px Segoe UI';ctx.textAlign='left';ctx.fillText('>',50,y+8);}
+    ctx.fillStyle=canBuy?'#eee':'#555';ctx.font='bold 16px Segoe UI';ctx.textAlign='left';
+    ctx.fillText(item.name,75,y+5);
+    ctx.fillStyle=canBuy?'#aaa':'#444';ctx.font='12px Segoe UI';ctx.fillText('Teleport to '+item.name,75,y+22);
+    ctx.fillStyle=canBuy?'#2ecc71':'#555';ctx.font='bold 14px Segoe UI';ctx.textAlign='right';
+    ctx.fillText(item.cost+' rupees',330,y+10);
+  });
+  ctx.textAlign='center';ctx.fillStyle='#666';ctx.font='13px Segoe UI';
+  ctx.fillText('Up/Down to select | Enter to buy | Alt to close',canvas.width/2,canvas.height-20);
+  if(portalShopMsg2){ctx.fillStyle='#ffd700';ctx.font='bold 14px Segoe UI';ctx.fillText(portalShopMsg2,canvas.width/2,canvas.height-40);}
+  msgEl.textContent='Portal Shop — Rupees: '+rupees;
+}
+
+function buyPortal(idx){
+  if(idx<0||idx>=portalShopItems.length)return;
+  var item=portalShopItems[idx];
+  if(rupees<item.cost){portalShopMsg2='Not enough rupees!';drawPortalShop();setTimeout(function(){portalShopMsg2='';if(portalShopOpen)drawPortalShop();},1500);return;}
+  if(ownedPortals.some(function(p){return p.dest===item.dest;})){portalShopMsg2='Already owned!';drawPortalShop();setTimeout(function(){portalShopMsg2='';if(portalShopOpen)drawPortalShop();},1500);return;}
+  rupees-=item.cost;
+  ownedPortals.push({name:item.name,dest:item.dest});
+  portalShopMsg2='Portal to '+item.name+' purchased!';
+  drawPortalShop();setTimeout(function(){portalShopMsg2='';if(portalShopOpen)drawPortalShop();},1500);
+}
+
+var portalUseOpen=false,portalUseSelection=1;
+
+function openPortalUseMenu(){
+  if(ownedPortals.length===0){msgEl.textContent='No portals owned!';setTimeout(function(){msgEl.textContent='';},1500);return;}
+  portalUseOpen=true;portalUseSelection=1;
+  clearInterval(tickInterval);drawPortalUseMenu();
+}
+
+function drawPortalUseMenu(){
+  ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.textAlign='center';
+  ctx.fillStyle='#9b59b6';ctx.font='bold 24px Segoe UI';ctx.fillText('Use Portal',canvas.width/2,40);
+  ctx.fillStyle='#888';ctx.font='14px Segoe UI';ctx.fillText(ownedPortals.length+' portal'+(ownedPortals.length>1?'s':'')+' owned',canvas.width/2,65);
+  ownedPortals.forEach(function(p,i){
+    var y=100+i*60;var selected=portalUseSelection===i+1;
+    ctx.fillStyle=selected?'#1a2a3a':'#1a1a2a';ctx.fillRect(60,y-15,280,45);
+    ctx.strokeStyle=selected?'#9b59b6':'#333';ctx.lineWidth=selected?2:1;ctx.strokeRect(60,y-15,280,45);
+    if(selected){ctx.fillStyle='#9b59b6';ctx.font='bold 16px Segoe UI';ctx.textAlign='left';ctx.fillText('>',50,y+8);}
+    ctx.fillStyle='#eee';ctx.font='bold 18px Segoe UI';ctx.textAlign='center';ctx.fillText(p.name,canvas.width/2,y+10);
+  });
+  ctx.fillStyle='#666';ctx.font='13px Segoe UI';ctx.textAlign='center';
+  ctx.fillText('Up/Down to select | Enter to teleport | Alt to close',canvas.width/2,canvas.height-20);
+  msgEl.textContent='Select a portal';
+}
+
+function usePortal(idx){
+  if(idx<0||idx>=ownedPortals.length)return;
+  var p=ownedPortals.splice(idx,1)[0];portalUseOpen=false;
+  if(p.dest==='capy6')enterCapy6();
+  else if(p.dest==='capy8')enterCapy8();
+  else if(p.dest==='sloth2')enterSloth2();
+  else if(p.dest==='capy3')enterCapy3();
+}
+
+function openDiscountShop(){
+  slothShopOpen=true;slothShopSelection=1;slothShopMsg='';slothShopDiscount=true;slothShopBeaver=false;slothShopBlue=false;
+  clearInterval(tickInterval);drawDiscountShop();
+}
+
+function drawDiscountShop(){
+  ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.textAlign='center';
+  ctx.fillStyle='#2ecc71';ctx.font='bold 24px Segoe UI';ctx.fillText('Discount Sloth!',canvas.width/2,40);
+  ctx.fillStyle='#2ecc71';ctx.font='16px Segoe UI';ctx.fillText('Rupees: '+rupees+' | 2 rupee discount!',canvas.width/2,70);
+  var items=[{name:'Gold Orange',desc:'Activates shooting',cost:1},{name:'Extra Life',desc:'Revive + 3 capybaras',cost:5},{name:'Spike',desc:'Adds spike to tail',cost:10}];
+  items.forEach(function(item,i){
+    var y=110+i*80;var num=i+1;var canBuy=rupees>=item.cost;var selected=slothShopSelection===num;
+    ctx.fillStyle=selected?(canBuy?'#1a3a1a':'#2a1a1a'):(canBuy?'#1a2a1a':'#1a1a1a');
+    ctx.fillRect(60,y-15,280,60);
+    ctx.strokeStyle=selected?'#2ecc71':(canBuy?'#2ecc71':'#333');ctx.lineWidth=selected?2:1;
+    ctx.strokeRect(60,y-15,280,60);
+    if(selected){ctx.fillStyle='#2ecc71';ctx.font='bold 16px Segoe UI';ctx.textAlign='left';ctx.fillText('>',50,y+8);}
+    ctx.fillStyle=canBuy?'#eee':'#555';ctx.font='bold 18px Segoe UI';ctx.textAlign='left';
+    ctx.fillText(item.name,75,y+5);
+    ctx.fillStyle=canBuy?'#aaa':'#444';ctx.font='13px Segoe UI';ctx.fillText(item.desc,75,y+25);
+    ctx.fillStyle=canBuy?'#2ecc71':'#555';ctx.font='bold 16px Segoe UI';ctx.textAlign='right';
+    ctx.fillText(item.cost+' rupees',330,y+10);
+  });
+  ctx.textAlign='center';ctx.fillStyle='#666';ctx.font='13px Segoe UI';
+  ctx.fillText('Up/Down to select | Enter to buy | Alt to close',canvas.width/2,canvas.height-20);
+  if(slothShopMsg){ctx.fillStyle='#ffd700';ctx.font='bold 14px Segoe UI';ctx.fillText(slothShopMsg,canvas.width/2,canvas.height-40);}
+  msgEl.textContent='Discount Shop — Rupees: '+rupees;
+}
+
+function buyFromDiscountSloth(itemNum){
+  if(itemNum===1&&rupees>=1){rupees-=1;shooting=true;shootEnd=Date.now()+8340;slothShopMsg='Gold Orange purchased!';}
+  else if(itemNum===2&&rupees>=5){rupees-=5;extraLives++;slothShopMsg='Extra Life purchased! ('+extraLives+' total)';}
+  else if(itemNum===3&&rupees>=10){rupees-=10;spikeCount++;slothShopMsg='Spike purchased!';}
+  else{slothShopMsg='Not enough rupees!';}
+  drawDiscountShop();setTimeout(function(){slothShopMsg='';if(slothShopOpen)drawDiscountShop();},1500);
+}
+
+function drawGreenSloth(sx,sy){
+  var px=sx*GRID+GRID/2,py=sy*GRID+GRID/2;
+  ctx.fillStyle='#2e8b57';ctx.beginPath();ctx.ellipse(px,py+2,8,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#3aa06a';ctx.beginPath();ctx.ellipse(px,py+4,5,5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#2e8b57';ctx.beginPath();ctx.arc(px,py-6,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#1a5a38';
+  ctx.beginPath();ctx.ellipse(px-3,py-6,3,2.5,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+3,py-6,3,2.5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#111';
+  ctx.beginPath();ctx.ellipse(px-3,py-6,1.5,0.8,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+3,py-6,1.5,0.8,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#1a5a38';ctx.lineWidth=0.7;ctx.beginPath();ctx.arc(px,py-3,2.5,0.1*Math.PI,0.9*Math.PI);ctx.stroke();
+  ctx.fillStyle='#0a3a20';ctx.beginPath();ctx.arc(px,py-4,1.2,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#2e8b57';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(px-7,py);ctx.quadraticCurveTo(px-14,py-5,px-12,py-10);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px+7,py);ctx.quadraticCurveTo(px+14,py-5,px+12,py-10);ctx.stroke();
+  ctx.fillStyle='#2ecc71';ctx.font='bold 7px Segoe UI';ctx.textAlign='center';
+  ctx.fillText('-2 SALE',px,py-15);
+}
+
+function isBlueHour(){var d=new Date();var h=d.getHours(),m=d.getMinutes(),t=h*60+m;return(t>=60&&t<389)||(t>=951&&t<1069);}
+
+function drawBlueSloth(sx,sy){
+  var px=sx*GRID+GRID/2,py=sy*GRID+GRID/2;
+  ctx.fillStyle='#2060b0';ctx.beginPath();ctx.ellipse(px,py+2,8,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#3080d0';ctx.beginPath();ctx.ellipse(px,py+4,5,5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#2060b0';ctx.beginPath();ctx.arc(px,py-6,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#103870';
+  ctx.beginPath();ctx.ellipse(px-3,py-6,3,2.5,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+3,py-6,3,2.5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#111';
+  ctx.beginPath();ctx.ellipse(px-3,py-6,1.5,0.8,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+3,py-6,1.5,0.8,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#103870';ctx.lineWidth=0.7;ctx.beginPath();ctx.arc(px,py-3,2.5,0.1*Math.PI,0.9*Math.PI);ctx.stroke();
+  ctx.fillStyle='#082050';ctx.beginPath();ctx.arc(px,py-4,1.2,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#2060b0';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(px-7,py);ctx.quadraticCurveTo(px-14,py-5,px-12,py-10);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px+7,py);ctx.quadraticCurveTo(px+14,py-5,px+12,py-10);ctx.stroke();
+  ctx.fillStyle='#4aa0ff';ctx.font='bold 7px Segoe UI';ctx.textAlign='center';
+  ctx.fillText('-3 SALE',px,py-15);
+}
+
+function openBlueShop(){
+  slothShopOpen=true;slothShopSelection=1;slothShopMsg='';slothShopDiscount=false;slothShopBeaver=false;slothShopBlue=true;
+  clearInterval(tickInterval);drawBlueShop();
+}
+
+function drawBlueShop(){
+  ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.textAlign='center';
+  ctx.fillStyle='#4aa0ff';ctx.font='bold 24px Segoe UI';ctx.fillText('Blue Hour Sale!',canvas.width/2,40);
+  ctx.fillStyle='#2ecc71';ctx.font='16px Segoe UI';ctx.fillText('Rupees: '+rupees+' | 3 rupee discount on ALL!',canvas.width/2,70);
+  var items=[{name:'Extra Life',desc:'Revive + 3 capybaras',cost:4},{name:'Spike',desc:'Adds spike to tail',cost:9},{name:'Happy Beaver',desc:'Chases enemies (9s)',cost:18}];
+  items.forEach(function(item,i){
+    var y=100+i*65;var num=i+1;var canBuy=rupees>=item.cost;var selected=slothShopSelection===num;
+    ctx.fillStyle=selected?(canBuy?'#0a1a3a':'#1a0a0a'):(canBuy?'#0a1a2a':'#1a1a1a');
+    ctx.fillRect(60,y-12,280,50);
+    ctx.strokeStyle=selected?'#4aa0ff':(canBuy?'#2ecc71':'#333');ctx.lineWidth=selected?2:1;
+    ctx.strokeRect(60,y-12,280,50);
+    if(selected){ctx.fillStyle='#4aa0ff';ctx.font='bold 16px Segoe UI';ctx.textAlign='left';ctx.fillText('>',50,y+8);}
+    ctx.fillStyle=canBuy?'#eee':'#555';ctx.font='bold 16px Segoe UI';ctx.textAlign='left';
+    ctx.fillText(item.name,75,y+5);
+    ctx.fillStyle=canBuy?'#aaa':'#444';ctx.font='12px Segoe UI';ctx.fillText(item.desc,75,y+22);
+    ctx.fillStyle=canBuy?'#4aa0ff':'#555';ctx.font='bold 14px Segoe UI';ctx.textAlign='right';
+    ctx.fillText(item.cost+' rupees',330,y+10);
+  });
+  ctx.textAlign='center';ctx.fillStyle='#666';ctx.font='13px Segoe UI';
+  ctx.fillText('Up/Down to select | Enter to buy | Alt to close',canvas.width/2,canvas.height-20);
+  if(slothShopMsg){ctx.fillStyle='#ffd700';ctx.font='bold 14px Segoe UI';ctx.fillText(slothShopMsg,canvas.width/2,canvas.height-40);}
+  msgEl.textContent='Blue Hour Sale — Rupees: '+rupees;
+}
+
+function buyFromBlueSloth(itemNum){
+  if(itemNum===1&&rupees>=4){rupees-=4;extraLives++;slothShopMsg='Extra Life purchased!';}
+  else if(itemNum===2&&rupees>=9){rupees-=9;spikeCount++;slothShopMsg='Spike purchased!';}
+  else if(itemNum===3&&rupees>=18){rupees-=18;happyBeaverCount++;slothShopMsg='Happy Beaver purchased!';}
+  else{slothShopMsg='Not enough rupees!';}
+  drawBlueShop();setTimeout(function(){slothShopMsg='';if(slothShopOpen)drawBlueShop();},1500);
+}
+
+function drawYellowSloth(sx,sy){
+  var px=sx*GRID+GRID/2,py=sy*GRID+GRID/2;
+  ctx.fillStyle='#c8a020';ctx.beginPath();ctx.ellipse(px,py+2,8,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#d8b840';ctx.beginPath();ctx.ellipse(px,py+4,5,5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#c8a020';ctx.beginPath();ctx.arc(px,py-6,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#907010';
+  ctx.beginPath();ctx.ellipse(px-3,py-6,3,2.5,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+3,py-6,3,2.5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#111';
+  ctx.beginPath();ctx.ellipse(px-3,py-6,1.5,0.8,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+3,py-6,1.5,0.8,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#907010';ctx.lineWidth=0.7;ctx.beginPath();ctx.arc(px,py-3,2.5,0.1*Math.PI,0.9*Math.PI);ctx.stroke();
+  ctx.fillStyle='#705008';ctx.beginPath();ctx.arc(px,py-4,1.2,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#c8a020';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(px-7,py);ctx.quadraticCurveTo(px-14,py-5,px-12,py-10);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px+7,py);ctx.quadraticCurveTo(px+14,py-5,px+12,py-10);ctx.stroke();
+  ctx.fillStyle='#ffd700';ctx.font='bold 7px Segoe UI';ctx.textAlign='center';
+  ctx.fillText('GAMBLE',px,py-15);
+}
+
+var gambleOpen=false,gambleSelection=1,gambleRevealed=false,gambleBoxes=[],gambleMsg='';
+var gambleHintActive=false;
+
+function getGamblesToday(){
+  var data=JSON.parse(localStorage.getItem('crawlingCapysGamble')||'{}');
+  var today=new Date().toDateString();
+  if(data.day!==today)return 0;
+  return data.count||0;
+}
+
+function addGambleToday(){
+  var today=new Date().toDateString();
+  var count=getGamblesToday()+1;
+  localStorage.setItem('crawlingCapysGamble',JSON.stringify({day:today,count:count}));
+}
+
+function openGamble(){
+  if(getGamblesToday()>=3){msgEl.textContent='No more gambles today!';setTimeout(function(){msgEl.textContent='';},1500);return;}
+  if(rupees<3){msgEl.textContent='Need 3 rupees to gamble!';setTimeout(function(){msgEl.textContent='';},1500);return;}
+  gambleOpen=true;gambleSelection=1;gambleRevealed=false;gambleMsg='';
+  var prizes=[7,5,3,0];
+  for(var i=prizes.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=prizes[i];prizes[i]=prizes[j];prizes[j]=t;}
+  gambleBoxes=prizes;
+  // Update hint panel
+  var hintEl=document.getElementById('gambleHint');
+  if(gambleHintActive&&hintEl){var winBox=gambleBoxes.indexOf(7)+1;hintEl.style.display='block';hintEl.textContent='Box '+winBox+' has the 7R';}
+  else if(hintEl){hintEl.style.display='none';}
+  clearInterval(tickInterval);drawGamble();
+}
+
+function drawGamble(){
+  ctx.fillStyle='rgba(0,0,0,0.9)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.textAlign='center';
+  ctx.fillStyle='#ffd700';ctx.font='bold 24px Segoe UI';ctx.fillText('Mystery Boxes!',canvas.width/2,40);
+  ctx.fillStyle='#2ecc71';ctx.font='16px Segoe UI';ctx.fillText('Cost: 3 rupees | Rupees: '+rupees,canvas.width/2,65);
+  for(var i=0;i<4;i++){
+    var bx=25+i*95,by=100,bw=80,bh=100;
+    var selected=gambleSelection===i+1;
+    if(gambleRevealed){
+      var prize=gambleBoxes[i];
+      ctx.fillStyle=prize===7?'#9b59b6':prize===5?'#2ecc71':prize===3?'#ffd700':'#ff4757';
+      ctx.fillRect(bx,by,bw,bh);
+      ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(bx,by,bw,bh);
+      ctx.fillStyle='#fff';ctx.font='bold 22px Segoe UI';
+      ctx.fillText(prize===0?'Empty':prize+'R',bx+bw/2,by+bh/2+8);
+    }else{
+      ctx.fillStyle=selected?'#c8a020':'#8a7020';
+      ctx.fillRect(bx,by,bw,bh);
+      ctx.strokeStyle=selected?'#ffd700':'#555';ctx.lineWidth=selected?3:1;
+      ctx.strokeRect(bx,by,bw,bh);
+      ctx.fillStyle='#fff';ctx.font='bold 36px Segoe UI';
+      ctx.fillText('?',bx+bw/2,by+bh/2+12);
+      ctx.fillStyle='#ddd';ctx.font='14px Segoe UI';
+      ctx.fillText('['+(i+1)+']',bx+bw/2,by+bh-10);
+    }
+  }
+  if(gambleMsg){ctx.fillStyle='#ffd700';ctx.font='bold 18px Segoe UI';ctx.fillText(gambleMsg,canvas.width/2,240);}
+  ctx.fillStyle='#666';ctx.font='13px Segoe UI';
+  ctx.fillText(gambleRevealed?'Press Alt to close':'Left/Right or 1-4 to pick | Enter to open',canvas.width/2,canvas.height-20);
+  msgEl.textContent='Pick a box!';
+}
+
+function pickBox(idx){
+  if(gambleRevealed||idx<0||idx>3)return;
+  if(getGamblesToday()>=3){gambleMsg='No more gambles today!';drawGamble();return;}
+  rupees-=3;addGambleToday();
+  var prize=gambleBoxes[idx];
+  rupees+=prize;
+  gambleRevealed=true;
+  if(prize===7)gambleMsg='JACKPOT! 7 rupees! (+4 profit)';
+  else if(prize===5)gambleMsg='You won 5 rupees! (+2 profit)';
+  else if(prize===3)gambleMsg='You got 3 rupees back! (even)';
+  else gambleMsg='Empty box! (-3 rupees)';
+  var hintEl=document.getElementById('gambleHint');if(hintEl)hintEl.style.display='none';
+  drawGamble();
+}
+
+function drawOrangeSloth(sx,sy){
+  var px=sx*GRID+GRID/2,py=sy*GRID+GRID/2;
+  ctx.fillStyle='#d07020';ctx.beginPath();ctx.ellipse(px,py+2,8,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e08838';ctx.beginPath();ctx.ellipse(px,py+4,5,5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#d07020';ctx.beginPath();ctx.arc(px,py-6,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#904810';
+  ctx.beginPath();ctx.ellipse(px-3,py-6,3,2.5,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+3,py-6,3,2.5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#111';
+  ctx.beginPath();ctx.ellipse(px-3,py-6,1.5,0.8,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+3,py-6,1.5,0.8,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#904810';ctx.lineWidth=0.7;ctx.beginPath();ctx.arc(px,py-3,2.5,0.1*Math.PI,0.9*Math.PI);ctx.stroke();
+  ctx.fillStyle='#603008';ctx.beginPath();ctx.arc(px,py-4,1.2,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#d07020';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(px-7,py);ctx.quadraticCurveTo(px-14,py-5,px-12,py-10);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px+7,py);ctx.quadraticCurveTo(px+14,py-5,px+12,py-10);ctx.stroke();
+  ctx.fillStyle='#ff8c42';ctx.font='bold 7px Segoe UI';ctx.textAlign='center';
+  ctx.fillText('INFO',px,py-15);
+}
+
+var infoShopOpen=false;
+
+function openInfoShop(){
+  infoShopOpen=true;clearInterval(tickInterval);drawInfoShop();
+}
+
+function drawInfoShop(){
+  ctx.fillStyle='rgba(0,0,0,0.9)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.textAlign='center';
+  ctx.fillStyle='#ff8c42';ctx.font='bold 22px Segoe UI';ctx.fillText('Informant Sloth',canvas.width/2,40);
+  ctx.fillStyle='#aaa';ctx.font='italic 14px Segoe UI';
+  ctx.fillText('"Psst... I know which box has the 7 rupees."',canvas.width/2,75);
+  ctx.fillText('"For 9 rupees, I\'ll look down at the answer..."',canvas.width/2,95);
+  ctx.fillStyle=gambleHintActive?'#555':'#2ecc71';ctx.font='bold 18px Segoe UI';
+  if(gambleHintActive){ctx.fillText('Already purchased! *looks down*',canvas.width/2,150);}
+  else{
+    var canBuy=rupees>=9;
+    ctx.fillStyle=canBuy?'#2ecc71':'#555';
+    ctx.fillText('[Enter] Buy info — 9 rupees',canvas.width/2,150);
+    if(!canBuy){ctx.fillStyle='#ff4757';ctx.font='14px Segoe UI';ctx.fillText('Not enough rupees!',canvas.width/2,175);}
+  }
+  ctx.fillStyle='#888';ctx.font='13px Segoe UI';
+  ctx.fillText('Gambles today: '+getGamblesToday()+'/3',canvas.width/2,210);
+  ctx.fillStyle='#666';ctx.font='13px Segoe UI';
+  ctx.fillText('Alt to close',canvas.width/2,canvas.height-15);
+  msgEl.textContent='Informant Sloth';
+}
+
+function buyInfo(){
+  if(gambleHintActive){return;}
+  if(rupees<9){return;}
+  rupees-=9;gambleHintActive=true;
+  drawInfoShop();
+}
+
+function drawScamSloth(sx,sy){
+  var px=sx*GRID+GRID/2,py=sy*GRID+GRID/2;
+  ctx.fillStyle='#d07020';ctx.beginPath();ctx.ellipse(px,py+2,8,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#e08838';ctx.beginPath();ctx.ellipse(px,py+4,5,5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#d07020';ctx.beginPath();ctx.arc(px,py-6,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#904810';
+  ctx.beginPath();ctx.ellipse(px-3,py-6,3,2.5,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+3,py-6,3,2.5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#111';
+  ctx.beginPath();ctx.ellipse(px-3,py-6,1.5,0.8,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+3,py-6,1.5,0.8,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#904810';ctx.lineWidth=0.7;ctx.beginPath();ctx.arc(px,py-3,2.5,0.1*Math.PI,0.9*Math.PI);ctx.stroke();
+  ctx.fillStyle='#603008';ctx.beginPath();ctx.arc(px,py-4,1.2,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#d07020';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(px-7,py);ctx.quadraticCurveTo(px-14,py-5,px-12,py-10);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px+7,py);ctx.quadraticCurveTo(px+14,py-5,px+12,py-10);ctx.stroke();
+  ctx.fillStyle='#ff8c42';ctx.font='bold 7px Segoe UI';ctx.textAlign='center';
+  ctx.fillText('INTEL',px,py-15);
+}
+
+var scamShopOpen=false,scamPhase=0;
+
+function openScamShop(){
+  scamShopOpen=true;scamPhase=0;clearInterval(tickInterval);drawScamShop();
+}
+
+function drawScamShop(){
+  ctx.fillStyle='rgba(0,0,0,0.9)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.textAlign='center';
+  if(scamPhase===0){
+    ctx.fillStyle='#ff8c42';ctx.font='bold 22px Segoe UI';ctx.fillText('Shady Sloth',canvas.width/2,40);
+    ctx.fillStyle='#aaa';ctx.font='italic 14px Segoe UI';
+    ctx.fillText('"Hey kid... want to know how to win at gambling?"',canvas.width/2,80);
+    ctx.fillText('"I\'ll tell you the SECRET for just 5 rupees..."',canvas.width/2,100);
+    var canBuy=rupees>=5;
+    ctx.fillStyle=canBuy?'#2ecc71':'#555';ctx.font='bold 18px Segoe UI';
+    ctx.fillText('[Enter] Pay 5 rupees',canvas.width/2,160);
+    if(!canBuy){ctx.fillStyle='#ff4757';ctx.font='14px Segoe UI';ctx.fillText('Not enough rupees!',canvas.width/2,185);}
+  }else if(scamPhase===1){
+    ctx.fillStyle='#ff8c42';ctx.font='bold 22px Segoe UI';ctx.fillText('Shady Sloth',canvas.width/2,40);
+    ctx.fillStyle='#ffd700';ctx.font='italic 16px Segoe UI';
+    ctx.fillText('"Alright, the secret is..."',canvas.width/2,100);
+    ctx.fillText('"..."',canvas.width/2,130);
+    ctx.fillStyle='#aaa';ctx.font='14px Segoe UI';ctx.fillText('*looks around nervously*',canvas.width/2,160);
+  }else{
+    ctx.fillStyle='#ff4757';ctx.font='bold 24px Segoe UI';ctx.fillText('The sloth ran away!',canvas.width/2,100);
+    ctx.fillStyle='#888';ctx.font='italic 14px Segoe UI';
+    ctx.fillText('*empty space where the sloth used to be*',canvas.width/2,140);
+    ctx.fillText('You lost 5 rupees...',canvas.width/2,170);
+    ctx.fillStyle='#555';ctx.font='12px Segoe UI';
+    ctx.fillText('Maybe find the REAL informant (orange sloth labeled INFO)',canvas.width/2,210);
+  }
+  ctx.fillStyle='#666';ctx.font='13px Segoe UI';
+  ctx.fillText('Alt to close',canvas.width/2,canvas.height-15);
+  msgEl.textContent='Shady Sloth';
+}
+
+function payScamSloth(){
+  if(scamPhase!==0||rupees<5)return;
+  rupees-=5;scamPhase=1;drawScamShop();
+  setTimeout(function(){if(scamShopOpen){scamPhase=2;drawScamShop();}},2000);
+}
+
+function drawPurpleSloth(sx,sy){
+  var px=sx*GRID+GRID/2,py=sy*GRID+GRID/2;
+  ctx.fillStyle='#7b2d8e';ctx.beginPath();ctx.ellipse(px,py+2,8,9,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#9040a8';ctx.beginPath();ctx.ellipse(px,py+4,5,5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#7b2d8e';ctx.beginPath();ctx.arc(px,py-6,7,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#501870';
+  ctx.beginPath();ctx.ellipse(px-3,py-6,3,2.5,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+3,py-6,3,2.5,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#111';
+  ctx.beginPath();ctx.ellipse(px-3,py-6,1.5,0.8,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(px+3,py-6,1.5,0.8,0,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#501870';ctx.lineWidth=0.7;ctx.beginPath();ctx.arc(px,py-3,2.5,0.1*Math.PI,0.9*Math.PI);ctx.stroke();
+  ctx.fillStyle='#301050';ctx.beginPath();ctx.arc(px,py-4,1.2,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#7b2d8e';ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(px-7,py);ctx.quadraticCurveTo(px-14,py-5,px-12,py-10);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(px+7,py);ctx.quadraticCurveTo(px+14,py-5,px+12,py-10);ctx.stroke();
+  ctx.fillStyle='#d470ff';ctx.font='bold 7px Segoe UI';ctx.textAlign='center';
+  ctx.fillText('BEAVER',px,py-15);
+}
+
+function openBeaverShop(){
+  slothShopOpen=true;slothShopSelection=1;slothShopMsg='';slothShopDiscount=false;slothShopBeaver=true;slothShopBlue=false;
+  clearInterval(tickInterval);drawBeaverShop();
+}
+
+function drawBeaverShop(){
+  ctx.fillStyle='rgba(0,0,0,0.85)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.textAlign='center';
+  ctx.fillStyle='#d470ff';ctx.font='bold 24px Segoe UI';ctx.fillText('Beaver Shop',canvas.width/2,40);
+  ctx.fillStyle='#2ecc71';ctx.font='16px Segoe UI';ctx.fillText('Rupees: '+rupees,canvas.width/2,70);
+  var canBuy=rupees>=21;
+  ctx.fillStyle=canBuy?'#1a2a1a':'#1a1a1a';ctx.fillRect(60,110,280,80);
+  ctx.strokeStyle=canBuy?'#d470ff':'#333';ctx.lineWidth=2;ctx.strokeRect(60,110,280,80);
+  ctx.fillStyle='#ffd700';ctx.font='bold 16px Segoe UI';ctx.textAlign='left';ctx.fillText('>',50,145);
+  ctx.fillStyle=canBuy?'#eee':'#555';ctx.font='bold 18px Segoe UI';ctx.fillText('Happy Beaver',75,135);
+  ctx.fillStyle=canBuy?'#aaa':'#444';ctx.font='13px Segoe UI';
+  ctx.fillText('Tiny fast beaver that chases enemies',75,155);
+  ctx.fillText('Kills on contact! Lasts 9 seconds',75,172);
+  ctx.fillStyle=canBuy?'#2ecc71':'#555';ctx.font='bold 16px Segoe UI';ctx.textAlign='right';
+  ctx.fillText('21 rupees',330,145);
+  ctx.textAlign='center';ctx.fillStyle='#666';ctx.font='13px Segoe UI';
+  ctx.fillText('Enter to buy | Alt to close',canvas.width/2,canvas.height-20);
+  if(slothShopMsg){ctx.fillStyle='#ffd700';ctx.font='bold 14px Segoe UI';ctx.fillText(slothShopMsg,canvas.width/2,canvas.height-40);}
+  msgEl.textContent='Beaver Shop — Rupees: '+rupees;
+}
+
+function buyHappyBeaver(){
+  if(rupees<21){slothShopMsg='Not enough rupees!';drawBeaverShop();setTimeout(function(){slothShopMsg='';if(slothShopOpen)drawBeaverShop();},1500);return;}
+  rupees-=21;
+  happyBeaverCount++;
+  slothShopMsg='Happy Beaver purchased! ('+happyBeaverCount+' owned)';
+  drawBeaverShop();setTimeout(function(){slothShopMsg='';if(slothShopOpen)drawBeaverShop();},1500);
+}
+
+function spawnHappyBeaver(){
+  var hb={x:snake?snake[0].x:Math.floor(COLS/2),y:snake?snake[0].y:Math.floor(ROWS/2),endTime:Date.now()+9000};
+  happyBeavers.push(hb);
+}
+
+function moveHappyBeavers(){
+  var now=Date.now();
+  happyBeavers=happyBeavers.filter(function(hb){return now<hb.endTime;});
+  happyBeavers.forEach(function(hb){
+    var nearest=null,bd=Infinity;
+    enemies.forEach(function(e){var d=Math.abs(e.x-hb.x)+Math.abs(e.y-hb.y);if(d<bd){bd=d;nearest=e;}});
+    if(nearest){
+      var dx=Math.sign(nearest.x-hb.x),dy=Math.sign(nearest.y-hb.y);
+      if(Math.abs(nearest.x-hb.x)>=Math.abs(nearest.y-hb.y)){hb.x+=dx;if(Math.random()<0.3)hb.x+=dx;}
+      else{hb.y+=dy;if(Math.random()<0.3)hb.y+=dy;}
+      hb.x=Math.max(0,Math.min(COLS-1,hb.x));hb.y=Math.max(0,Math.min(ROWS-1,hb.y));
+      var ki=enemies.findIndex(function(e){return e.x===hb.x&&e.y===hb.y;});
+      if(ki!==-1){var killed=enemies.splice(ki,1)[0];killCount++;if(killCount>=4){killCount=0;vacuumSuck();}awardRupees(killed.type);
+        var rd=killed.type==='wombat'?4110:6870;
+        setTimeout(function(kt){return function(){if(gameOver)return;var pos;while(true){pos={x:Math.floor(Math.random()*COLS),y:Math.floor(Math.random()*ROWS)};if(Math.abs(pos.x-snake[0].x)+Math.abs(pos.y-snake[0].y)>=5&&!snake.some(function(s){return s.x===pos.x&&s.y===pos.y;}))break;}enemies.push({x:pos.x,y:pos.y,dir:DIRS[Math.floor(Math.random()*4)],type:kt});if(currentScreen==='main')draw();};}(killed.type),rd);
+      }
+    }
+  });
+}
+
+function drawHappyBeavers(){
+  happyBeavers.forEach(function(hb){
+    var px=hb.x*GRID+GRID/2,py=hb.y*GRID+GRID/2;
+    ctx.fillStyle='#ffd700';ctx.shadowColor='#ffd700';ctx.shadowBlur=6;
+    ctx.beginPath();ctx.arc(px,py,5,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;
+    ctx.fillStyle='#b8860b';ctx.beginPath();ctx.arc(px-3,py-3,1.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px+3,py-3,1.5,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#111';ctx.beginPath();ctx.arc(px-2,py-1,1,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(px+2,py-1,1,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#fff';ctx.fillRect(px-1,py+2,1,2);ctx.fillRect(px,py+2,1,2);
+  });
+}
+
+var inventoryOpen=false;
+
+function openInventory(){
+  inventoryOpen=true;clearInterval(tickInterval);drawInventory();
+}
+
+function drawInventory(){
+  ctx.fillStyle='rgba(0,0,0,0.9)';ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.textAlign='center';
+  ctx.fillStyle='#ffd700';ctx.font='bold 26px Segoe UI';ctx.fillText('Inventory',canvas.width/2,35);
+  ctx.fillStyle='#2ecc71';ctx.font='14px Segoe UI';ctx.fillText('Rupees: '+rupees,canvas.width/2,55);
+  var y=85;
+  ctx.textAlign='left';ctx.font='15px Segoe UI';
+  // Happy Beavers
+  ctx.fillStyle=happyBeaverCount>0?'#ffd700':'#555';
+  ctx.fillText('Happy Beavers: '+happyBeaverCount,30,y);
+  ctx.fillStyle='#888';ctx.font='11px Segoe UI';ctx.fillText('Press 0 to deploy (9s, chases enemies)',30,y+15);
+  y+=40;
+  // Extra Lives
+  ctx.fillStyle=extraLives>0?'#ff6b6b':'#555';ctx.font='15px Segoe UI';
+  ctx.fillText('Extra Lives: '+extraLives,30,y);
+  ctx.fillStyle='#888';ctx.font='11px Segoe UI';ctx.fillText('Auto-used on death (Y to confirm)',30,y+15);
+  y+=40;
+  // Spikes
+  ctx.fillStyle=spikeCount>0?'#c0c0c0':'#555';ctx.font='15px Segoe UI';
+  ctx.fillText('Tail Spikes: '+spikeCount,30,y);
+  ctx.fillStyle='#888';ctx.font='11px Segoe UI';ctx.fillText('Kill enemies on tail contact',30,y+15);
+  y+=40;
+  // Gold Orange (active shooting)
+  ctx.fillStyle=shooting?'#ff8c00':'#555';ctx.font='15px Segoe UI';
+  ctx.fillText('Gold Orange: '+(shooting?'ACTIVE':'inactive'),30,y);
+  if(shooting){var remaining=Math.max(0,Math.ceil((shootEnd-Date.now())/1000));ctx.fillStyle='#888';ctx.font='11px Segoe UI';ctx.fillText(remaining+'s remaining',30,y+15);}
+  y+=40;
+  // Portals
+  ctx.fillStyle='#9b59b6';ctx.font='bold 16px Segoe UI';
+  ctx.fillText('Portals:',30,y);
+  y+=20;
+  if(ownedPortals.length===0){ctx.fillStyle='#555';ctx.font='14px Segoe UI';ctx.fillText('None — buy from red sloths',30,y);}
+  else{ownedPortals.forEach(function(p){ctx.fillStyle='#d470ff';ctx.font='14px Segoe UI';ctx.fillText('> '+p.name,40,y);y+=20;});}
+  y+=15;
+  ctx.fillStyle='#888';ctx.font='11px Segoe UI';
+  ctx.fillText('Press . in Sloth landscapes to use portals',30,y);
+  ctx.textAlign='center';ctx.fillStyle='#666';ctx.font='13px Segoe UI';
+  ctx.fillText('Press / or Alt to close',canvas.width/2,canvas.height-15);
+  msgEl.textContent='Inventory';
+}
+
 function openSlothShop(){
-  slothShopOpen=true;slothShopSelection=1;
+  slothShopOpen=true;slothShopSelection=1;slothShopDiscount=false;slothShopBeaver=false;slothShopBlue=false;
   clearInterval(tickInterval);
   drawSlothShop();
 }
@@ -950,7 +1706,7 @@ function checkSlothCollision(){
 }
 
 // === MENU ===
-var menuActive=true,gameSelectActive=false,gameDeleteMode=false,namingActive=false,nameInput='',renamingGameIdx=-1;
+var menuActive=true,gameSelectActive=false,gameDeleteMode=false,namingActive=false,nameInput='',renamingGameIdx=-1,saveBrowseActive=false,saveBrowseDelete=false;
 
 function drawMenu(){ctx.fillStyle='#0a0a1a';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#00ff88';ctx.shadowColor='#00ff88';ctx.shadowBlur=20;ctx.font='bold 48px Segoe UI';ctx.textAlign='center';ctx.fillText('CrawlingCapys',canvas.width/2,100);ctx.shadowBlur=0;var cx=canvas.width/2;ctx.fillStyle='#8B6914';ctx.beginPath();ctx.arc(cx,160,20,0,Math.PI*2);ctx.fill();ctx.fillStyle='#6B4F10';ctx.beginPath();ctx.arc(cx-12,145,6,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(cx+12,145,6,0,Math.PI*2);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(cx-6,157,3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(cx+6,157,3,0,Math.PI*2);ctx.fill();ctx.fillStyle='#5a3e1b';ctx.beginPath();ctx.ellipse(cx,167,6,4,0,0,Math.PI*2);ctx.fill();var games=getAllGames();ctx.font='bold 22px Segoe UI';ctx.fillStyle='#00ff88';ctx.fillText('[1] New Game',cx,240);if(games.length>0){ctx.fillStyle='#ffd700';ctx.fillText('[2] Play Old Game',cx,285);ctx.font='14px Segoe UI';ctx.fillStyle='#888';ctx.fillText('('+games.length+' game'+(games.length>1?'s':'')+')',cx,310);}else{ctx.fillStyle='#555';ctx.font='18px Segoe UI';ctx.fillText('No old games yet',cx,285);}ctx.fillStyle='#555';ctx.font='13px Segoe UI';ctx.fillText('Capybara Snake — collect oranges, avoid danger',cx,canvas.height-20);msgEl.textContent='Press 1 for New Game, 2 for Old Game';}
 
@@ -962,9 +1718,19 @@ function drawGameSelect(){var games=getAllGames();ctx.fillStyle='rgba(0,0,0,0.9)
 
 document.addEventListener('keydown',function menuHandler(e){
   if(!menuActive)return;
+  if(saveBrowseActive){
+    if(e.key==='Escape'){if(saveBrowseDelete){saveBrowseDelete=false;showSaveMenu();}else{saveBrowseActive=false;gameSelectActive=true;drawGameSelect();}return;}
+    if(e.key==='x'||e.key==='X'){saveBrowseDelete=true;showSaveMenu();return;}
+    var sbSlot=parseInt(e.key)-1;var sbSaves=getSavesList();
+    if(sbSlot>=0&&sbSlot<sbSaves.length){
+      if(saveBrowseDelete){var sbGames=getAllGames();var sbGm=sbGames.find(function(g){return g.id===currentGameId;});if(sbGm){sbGm.saves.splice(sbSlot,1);saveAllGames(sbGames);}saveBrowseDelete=false;showSaveMenu();}
+      else{saveBrowseActive=false;menuActive=false;loadGame(sbSlot);}
+    }
+    return;
+  }
   if(namingActive){if(e.key==='Escape'){namingActive=false;nameInput='';drawMenu();return;}if(e.key==='Enter'){var name=nameInput.trim()||'Game '+(getAllGames().length+1);namingActive=false;nameInput='';createNewGame(name);return;}if(e.key==='Backspace'){e.preventDefault();nameInput=nameInput.slice(0,-1);drawNamingScreen();return;}if(e.key.length===1&&nameInput.length<20){nameInput+=e.key;drawNamingScreen();}return;}
   if(renamingGameIdx>=0){if(e.key==='Escape'){renamingGameIdx=-1;nameInput='';drawGameSelect();return;}if(e.key==='Enter'){var games=getAllGames();if(renamingGameIdx<games.length&&nameInput.trim()){games[renamingGameIdx].name=nameInput.trim();saveAllGames(games);}renamingGameIdx=-1;nameInput='';drawGameSelect();return;}if(e.key==='Backspace'){e.preventDefault();nameInput=nameInput.slice(0,-1);drawRenameScreen();return;}if(e.key.length===1&&nameInput.length<20){nameInput+=e.key;drawRenameScreen();}return;}
-  if(gameSelectActive){if(e.key==='Escape'){if(gameDeleteMode){gameDeleteMode=false;drawGameSelect();}else{gameSelectActive=false;drawMenu();}return;}if((e.key==='x'||e.key==='X')&&!gameDeleteMode){gameDeleteMode=true;drawGameSelect();return;}if(gameDeleteMode){var slot=parseInt(e.key)-1;var games2=getAllGames();if(slot>=0&&slot<games2.length){games2.splice(slot,1);saveAllGames(games2);gameDeleteMode=false;if(games2.length===0){gameSelectActive=false;drawMenu();}else drawGameSelect();}return;}if(e.key==='r'||e.key==='R'){msgEl.textContent='Press number of game to rename...';var rh=function(e2){document.removeEventListener('keydown',rh,true);var sl=parseInt(e2.key)-1;var gms=getAllGames();if(sl>=0&&sl<gms.length){renamingGameIdx=sl;nameInput=gms[sl].name;drawRenameScreen();}else drawGameSelect();e2.stopPropagation();e2.preventDefault();};document.addEventListener('keydown',rh,true);return;}var slot2=parseInt(e.key)-1;var games3=getAllGames();if(slot2>=0&&slot2<games3.length){gameSelectActive=false;menuActive=false;currentGameId=games3[slot2].id;creativeMode=(games3[slot2].name==='CapyBopyCIG');gameOver=false;if(games3[slot2].saves.length>0){saveMenuOpen=true;deleteMode2=false;showSaveMenu();}else{init();restartTimer();}}return;}
+  if(gameSelectActive){if(e.key==='Escape'){if(gameDeleteMode){gameDeleteMode=false;drawGameSelect();}else{gameSelectActive=false;drawMenu();}return;}if((e.key==='x'||e.key==='X')&&!gameDeleteMode){gameDeleteMode=true;drawGameSelect();return;}if(gameDeleteMode){var slot=parseInt(e.key)-1;var games2=getAllGames();if(slot>=0&&slot<games2.length){games2.splice(slot,1);saveAllGames(games2);gameDeleteMode=false;if(games2.length===0){gameSelectActive=false;drawMenu();}else drawGameSelect();}return;}if(e.key==='r'||e.key==='R'){msgEl.textContent='Press number of game to rename...';var rh=function(e2){document.removeEventListener('keydown',rh,true);var sl=parseInt(e2.key)-1;var gms=getAllGames();if(sl>=0&&sl<gms.length){renamingGameIdx=sl;nameInput=gms[sl].name;drawRenameScreen();}else drawGameSelect();e2.stopPropagation();e2.preventDefault();};document.addEventListener('keydown',rh,true);return;}var slot2=parseInt(e.key)-1;var games3=getAllGames();if(slot2>=0&&slot2<games3.length){gameSelectActive=false;currentGameId=games3[slot2].id;creativeMode=(games3[slot2].name==='CapyBopyCIG');gameOver=false;running=false;if(games3[slot2].saves.length>0){saveBrowseActive=true;saveBrowseDelete=false;showSaveMenu();}else{menuActive=false;init();restartTimer();}}return;}
   if(e.key==='1'){namingActive=true;nameInput='';drawNamingScreen();}
   else if(e.key==='2'){var games4=getAllGames();if(games4.length>0){gameSelectActive=true;gameDeleteMode=false;drawGameSelect();}}
 });

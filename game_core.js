@@ -5,7 +5,7 @@ function draw() {
   for(var i2=0;i2<=ROWS;i2++){ctx.beginPath();ctx.moveTo(0,i2*GRID);ctx.lineTo(canvas.width,i2*GRID);ctx.stroke();}
   if(goldOrange){var gx=goldOrange.x*GRID+GRID/2,gy=goldOrange.y*GRID+GRID/2;ctx.shadowColor='#ffd700';ctx.shadowBlur=14;ctx.fillStyle='#ffd700';ctx.beginPath();ctx.arc(gx,gy,GRID/2-2,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#2ecc71';ctx.beginPath();ctx.ellipse(gx+2,gy-(GRID/2-2)-1,3,5,Math.PI/6,0,Math.PI*2);ctx.fill();}
   bullets.forEach(function(b){drawBullet(b.x,b.y);});
-  drawEnemies();
+  drawEnemies();drawHappyBeavers();
   if(beaver){drawBeaver(beaver.x*GRID+GRID/2,beaver.y*GRID+GRID/2);}
   beaverLogs.forEach(function(l){drawBeaverLog(l.x,l.y,l.gold,l.purple);});
   drawStorms();
@@ -26,6 +26,7 @@ function draw() {
   ctx.textAlign='left';ctx.font='11px Segoe UI';
   ctx.fillStyle='#2ecc71';ctx.fillText('Rupees: '+rupees,5,canvas.height-18);
   ctx.fillStyle='#ff6b6b';ctx.fillText('Lives: '+extraLives,5,canvas.height-5);
+  ctx.fillStyle='#ffd700';ctx.fillText('Beavers: '+happyBeaverCount,80,canvas.height-18);
   if(gameOver){ctx.fillStyle='rgba(0,0,0,0.55)';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.fillStyle='#ff4757';ctx.font='bold 36px Segoe UI';ctx.textAlign='center';ctx.fillText('Game Over',canvas.width/2,canvas.height/2-10);ctx.fillStyle='#eee';ctx.font='18px Segoe UI';ctx.fillText('Score: '+score,canvas.width/2,canvas.height/2+24);}
 }
 
@@ -41,7 +42,7 @@ function step() {
   moveEnemies();
   if(!shieldActive)applyStormDamage();else applyStormDamageEnemiesOnly();
   if(currentScreen!=='main')return;
-  moveBeaver();moveBeaverLogs();checkBeaverLogHits();
+  moveBeaver();moveBeaverLogs();checkBeaverLogHits();moveHappyBeavers();
   if(!shieldActive&&!creativeMode){
     var hitRaccoon=enemies.some(function(e){return e.type==='raccoon'&&(snake.some(function(s){return s.x===e.x&&s.y===e.y;})||(head.x===e.x&&head.y===e.y));});
     var hitWombat=enemies.some(function(e){return e.type==='wombat'&&(snake.some(function(s){return s.x===e.x&&s.y===e.y;})||(head.x===e.x&&head.y===e.y));});
@@ -70,7 +71,16 @@ function die() {
     drawDeathChoice();
     return;
   }
-  gameOver=true;running=false;currentScreen='main';draw();msgEl.textContent='Press R or Space to restart';
+  clearInterval(tickInterval);
+  gameOver=true;running=false;
+  // Reset to main game for game over screen
+  if(currentScreen!=='main'){
+    currentScreen='main';
+    // Ensure snake exists for draw
+    if(!snake||snake.length===0){var mid=Math.floor(ROWS/2);snake=[{x:5,y:mid}];}
+    if(!food)food={x:10,y:10};
+  }
+  draw();msgEl.textContent='Press R or Space to restart';
 }
 
 function drawDeathChoice(){
@@ -87,8 +97,11 @@ function useExtraLife(){
   extraLives--;
   if(currentScreen==='capy5'){
     capy5HP=Math.min(5,capy5HP+3);
+  }else if(currentScreen==='capy7'){
+    // Reset player to starting island
+    capy7Player={x:Math.floor(COLS/2),y:C7_ISLAND_BOT};
   }else{
-    for(var el=0;el<3;el++)snake.push({x:snake[snake.length-1].x,y:snake[snake.length-1].y});
+    if(snake&&snake.length>0){for(var el=0;el<3;el++)snake.push({x:snake[snake.length-1].x,y:snake[snake.length-1].y});}
   }
   msgEl.textContent='Extra life used! ('+extraLives+' left)';
   setTimeout(function(){if(!gameOver)msgEl.textContent='';},1500);
@@ -99,7 +112,6 @@ function declineExtraLife(){
   deathChoicePending=false;
   gameOver=true;running=false;currentScreen='main';draw();msgEl.textContent='Press R or Space to restart';
 }
-}
 
 var KEY_MAP={ArrowUp:{x:0,y:-1},w:{x:0,y:-1},W:{x:0,y:-1},ArrowDown:{x:0,y:1},s:{x:0,y:1},S:{x:0,y:1},ArrowLeft:{x:-1,y:0},a:{x:-1,y:0},A:{x:-1,y:0},ArrowRight:{x:1,y:0},d:{x:1,y:0},D:{x:1,y:0}};
 
@@ -107,7 +119,7 @@ var saveMenuOpen=false;
 var deleteMode2=false;
 
 document.addEventListener('keydown',function(e){
-  if(cutsceneActive){if(e.key==='x'||e.key==='X')skipCutscene();return;}
+  if(cutsceneActive){if(e.key==='x'||e.key==='X')skipCutscene();if(e.key==='Tab'){cutsceneActive=false;if(cutsceneTimer2)clearTimeout(cutsceneTimer2);menuActive=true;drawMenu();}return;}
   if(deathChoicePending){
     if(e.key==='y'||e.key==='Y'){useExtraLife();return;}
     if(e.key==='n'||e.key==='N'){declineExtraLife();return;}
@@ -117,19 +129,63 @@ document.addEventListener('keydown',function(e){
     if(e.key==='Alt'){e.preventDefault();slothShopOpen=false;resumeCurrentScreen();return;}
     if(e.key==='Enter'){
       e.preventDefault();
-      if(slothShopSelection===1)buyFromSloth(1);
+      if(slothShopBlue){buyFromBlueSloth(slothShopSelection);}
+      else if(slothShopBeaver){buyHappyBeaver();}
+      else if(slothShopDiscount){buyFromDiscountSloth(slothShopSelection);}
+      else if(slothShopSelection===1)buyFromSloth(1);
       else if(slothShopSelection===2)buyFromSloth(2);
       else if(slothShopSelection===3)buyFromSloth(3);
       return;
     }
-    if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){slothShopSelection=Math.max(1,slothShopSelection-1);drawSlothShop();return;}
-    if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){slothShopSelection=Math.min(3,slothShopSelection+1);drawSlothShop();return;}
-    if(e.key==='1'){slothShopSelection=1;drawSlothShop();return;}
-    if(e.key==='2'){slothShopSelection=2;drawSlothShop();return;}
-    if(e.key==='3'){slothShopSelection=3;drawSlothShop();return;}
+    var shopDraw=slothShopBlue?drawBlueShop:(slothShopBeaver?drawBeaverShop:(slothShopDiscount?drawDiscountShop:drawSlothShop));
+    var maxSel=slothShopBlue?3:(slothShopBeaver?1:3);
+    if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){slothShopSelection=Math.max(1,slothShopSelection-1);shopDraw();return;}
+    if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){slothShopSelection=Math.min(maxSel,slothShopSelection+1);shopDraw();return;}
+    if(e.key==='1'){slothShopSelection=1;shopDraw();return;}
+    if(e.key==='2'){slothShopSelection=2;shopDraw();return;}
+    if(e.key==='3'){slothShopSelection=3;shopDraw();return;}
     return;
   }
-  if(menuActive)return;
+  if(portalShopOpen){
+    if(e.key==='Alt'){e.preventDefault();portalShopOpen=false;resumeCurrentScreen();return;}
+    if(e.key==='Enter'){e.preventDefault();buyPortal(portalShopSelection-1);return;}
+    if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){portalShopSelection=Math.max(1,portalShopSelection-1);drawPortalShop();return;}
+    if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){portalShopSelection=Math.min(portalShopItems.length,portalShopSelection+1);drawPortalShop();return;}
+    return;
+  }
+  if(portalUseOpen){
+    if(e.key==='Alt'){e.preventDefault();portalUseOpen=false;resumeCurrentScreen();return;}
+    if(e.key==='Enter'){e.preventDefault();usePortal(portalUseSelection-1);return;}
+    if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){portalUseSelection=Math.max(1,portalUseSelection-1);drawPortalUseMenu();return;}
+    if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){portalUseSelection=Math.min(ownedPortals.length,portalUseSelection+1);drawPortalUseMenu();return;}
+    return;
+  }
+  if(inventoryOpen){
+    if(e.key==='/'||e.key==='Alt'||e.key==='Escape'){e.preventDefault();inventoryOpen=false;resumeCurrentScreen();return;}
+    return;
+  }
+  if(gambleOpen){
+    if(gambleRevealed){if(e.key==='Alt'||e.key==='Escape'){gambleOpen=false;resumeCurrentScreen();}return;}
+    if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A'){gambleSelection=Math.max(1,gambleSelection-1);drawGamble();return;}
+    if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){gambleSelection=Math.min(4,gambleSelection+1);drawGamble();return;}
+    if(e.key==='1'){gambleSelection=1;drawGamble();return;}
+    if(e.key==='2'){gambleSelection=2;drawGamble();return;}
+    if(e.key==='3'){gambleSelection=3;drawGamble();return;}
+    if(e.key==='4'){gambleSelection=4;drawGamble();return;}
+    if(e.key==='Enter'){e.preventDefault();pickBox(gambleSelection-1);return;}
+    if(e.key==='Alt'||e.key==='Escape'){gambleOpen=false;resumeCurrentScreen();return;}
+    return;
+  }
+  if(infoShopOpen){
+    if(e.key==='Enter'){e.preventDefault();buyInfo();return;}
+    if(e.key==='Alt'||e.key==='Escape'){infoShopOpen=false;resumeCurrentScreen();return;}
+    return;
+  }
+  if(scamShopOpen){
+    if(e.key==='Enter'&&scamPhase===0){e.preventDefault();payScamSloth();return;}
+    if(e.key==='Alt'||e.key==='Escape'){scamShopOpen=false;resumeCurrentScreen();return;}
+    return;
+  }
   if(saveMenuOpen){
     if(e.key===' '){e.preventDefault();saveMenuOpen=false;deleteMode2=false;resumeCurrentScreen();return;}
     if(e.key==='x'||e.key==='X'){deleteMode2=true;showSaveMenu();return;}
@@ -138,6 +194,8 @@ document.addEventListener('keydown',function(e){
     if(slot>=0&&slot<saves.length){if(deleteMode2){var games=getAllGames();var gm=games.find(function(g){return g.id===currentGameId;});if(gm){gm.saves.splice(slot,1);saveAllGames(games);}deleteMode2=false;showSaveMenu();}else{saveMenuOpen=false;loadGame(slot);}}
     return;
   }
+  if(menuActive)return;
+  if(e.key==='/'){e.preventDefault();openInventory();return;}
   if(currentScreen==='capy2'){
     if(e.key==='Escape'){clearInterval(tickInterval);currentScreen='main';draw();restartTimer();return;}
     if(e.key==='='){saveGame();return;}if(e.key==='-'){saveMenuOpen=true;deleteMode2=false;clearInterval(tickInterval);showSaveMenu();return;}
@@ -168,7 +226,7 @@ document.addEventListener('keydown',function(e){
   if(currentScreen==='capy7'){
     if(e.key==='Escape'){clearInterval(tickInterval);returnToMainGame();return;}
     if(e.key==='='){saveGame();return;}if(e.key==='-'){saveMenuOpen=true;deleteMode2=false;clearInterval(tickInterval);showSaveMenu();return;}
-    if(capy7CutsceneActive){if(e.key==='x'||e.key==='X'){clearInterval(tickInterval);returnToMainGame();}return;}
+    if(capy7CutsceneActive){if(e.key==='x'||e.key==='X'){capy7CutsceneActive=false;clearInterval(tickInterval);enterSloth2();}return;}
     var mapped6=KEY_MAP[e.key];
     if(mapped6&&capy7Player){
       e.preventDefault();
@@ -178,29 +236,58 @@ document.addEventListener('keydown',function(e){
     }
     return;
   }
+  if(currentScreen==='sloth2'){
+    if(e.key==='Escape'){clearInterval(tickInterval);returnToMainGame();return;}
+    if(e.key==='='){saveGame();return;}if(e.key==='-'){saveMenuOpen=true;deleteMode2=false;clearInterval(tickInterval);showSaveMenu();return;}
+    if(e.key==='.'){openPortalUseMenu();return;}
+    var mapped9=KEY_MAP[e.key];if(mapped9){e.preventDefault();nextDir=mapped9;if(!sloth2Running)sloth2Running=true;sloth2MoveQueued=true;}return;
+  }
   if(currentScreen==='capy6'){
     if(e.key==='Escape'){clearInterval(tickInterval);returnToMainGame();return;}
     if(e.key==='='){saveGame();return;}if(e.key==='-'){saveMenuOpen=true;deleteMode2=false;clearInterval(tickInterval);showSaveMenu();return;}
-    if(capy6CutsceneActive){if(e.key==='x'||e.key==='X'){capy6CutsceneActive=false;startCapy6Snake();}return;}
-    var mapped7=KEY_MAP[e.key];if(mapped7){e.preventDefault();if(mapped7.x!==-dir.x||mapped7.y!==-dir.y)nextDir=mapped7;if(!capy6Running)capy6Running=true;}return;
+    if(capy6CutsceneActive){if(e.key==='x'||e.key==='X'){capy6CutsceneActive=false;startCapy6();}return;}
+    if(e.key==='.'){openPortalUseMenu();return;}
+    var mapped7=KEY_MAP[e.key];if(mapped7){e.preventDefault();nextDir=mapped7;if(!capy6Running)capy6Running=true;capy6MoveQueued=true;}return;
   }
   if(currentScreen==='capy8'){
     if(e.key==='Escape'){clearInterval(tickInterval);returnToMainGame();return;}
     if(e.key==='='){saveGame();return;}if(e.key==='-'){saveMenuOpen=true;deleteMode2=false;clearInterval(tickInterval);showSaveMenu();return;}
-    if(capy8CutsceneActive){if(e.key==='x'||e.key==='X'){capy8CutsceneActive=false;startCapy8Snake();}return;}
-    var mapped8=KEY_MAP[e.key];if(mapped8){e.preventDefault();if(mapped8.x!==-dir.x||mapped8.y!==-dir.y)nextDir=mapped8;if(!capy8Running)capy8Running=true;}return;
+    if(capy8CutsceneActive){if(e.key==='x'||e.key==='X'){capy8CutsceneActive=false;startCapy8();}return;}
+    if(e.key==='.'){openPortalUseMenu();return;}
+    var mapped8=KEY_MAP[e.key];if(mapped8){e.preventDefault();nextDir=mapped8;if(!capy8Running)capy8Running=true;capy8MoveQueued=true;}return;
   }
   var mapped5=KEY_MAP[e.key];
   if(mapped5){e.preventDefault();if(mapped5.x!==-dir.x||mapped5.y!==-dir.y)nextDir=mapped5;if(!running&&!gameOver){running=true;msgEl.textContent='';}if(creativeMode)creativeMoveQueued=true;}
   if(e.key==='='&&!gameOver&&running)saveGame();
+  if(e.key==='0'&&!gameOver&&running){if(happyBeaverCount>0){happyBeaverCount--;spawnHappyBeaver();msgEl.textContent='Happy Beaver deployed! ('+happyBeaverCount+' left)';setTimeout(function(){if(!gameOver)msgEl.textContent='';},1500);}else{msgEl.textContent='No happy beavers!';setTimeout(function(){if(!gameOver)msgEl.textContent='';},1000);}}
   if(e.key==='-'){saveMenuOpen=true;deleteMode2=false;clearInterval(tickInterval);showSaveMenu();}
   if(e.key==='Enter'&&!gameOver&&running){e.preventDefault();if(goldCount>0){goldCount--;score=goldCount;scoreEl.textContent=score;enterCapy2();}}
   if((e.key==='r'||e.key==='R')&&gameOver)init();
   if(creativeMode){if(e.key==='2'){clearInterval(tickInterval);enterCapy2();return;}if(e.key==='3'){clearInterval(tickInterval);enterCapy3();return;}if(e.key==='4'){clearInterval(tickInterval);enterCapy4();return;}if(e.key==='5'){clearInterval(tickInterval);enterCapy5();return;}if(e.key==='6'){clearInterval(tickInterval);enterCapy6();return;}if(e.key==='7'){clearInterval(tickInterval);enterCapy7();return;}if(e.key==='8'){clearInterval(tickInterval);enterCapy8();return;}}
-  if(e.key==='Tab'){e.preventDefault();clearInterval(tickInterval);if(goldOrangeTimer)clearTimeout(goldOrangeTimer);if(beaverTimer)clearTimeout(beaverTimer);if(beaverLogInterval)clearInterval(beaverLogInterval);if(autoSaveInterval)clearInterval(autoSaveInterval);if(stormTimer)clearTimeout(stormTimer);menuActive=true;currentScreen='main';drawMenu();}
+  if(e.key==='Tab'){e.preventDefault();clearInterval(tickInterval);if(goldOrangeTimer)clearTimeout(goldOrangeTimer);if(beaverTimer)clearTimeout(beaverTimer);if(beaverLogInterval)clearInterval(beaverLogInterval);if(autoSaveInterval)clearInterval(autoSaveInterval);if(stormTimer)clearTimeout(stormTimer);cutsceneActive=false;deathChoicePending=false;slothShopOpen=false;saveMenuOpen=false;menuActive=true;currentScreen='main';drawMenu();}
 });
 
 speedEl.addEventListener('change',function(){restartTimer();});
+
+canvas.addEventListener('click',function(e){
+  if(!saveMenuOpen&&!saveBrowseActive)return;
+  var rect=canvas.getBoundingClientRect();
+  var my=e.clientY-rect.top;
+  var saves=getSavesList();
+  for(var i=0;i<saves.length;i++){
+    var sy=75+i*50;
+    if(my>=sy-15&&my<=sy+15){
+      if(saveMenuOpen){
+        if(deleteMode2){var games=getAllGames();var gm=games.find(function(g){return g.id===currentGameId;});if(gm){gm.saves.splice(i,1);saveAllGames(games);}deleteMode2=false;showSaveMenu();}
+        else{saveMenuOpen=false;loadGame(i);}
+      }else if(saveBrowseActive){
+        if(saveBrowseDelete){var gms2=getAllGames();var gm2=gms2.find(function(g){return g.id===currentGameId;});if(gm2){gm2.saves.splice(i,1);saveAllGames(gms2);}saveBrowseDelete=false;showSaveMenu();}
+        else{saveBrowseActive=false;menuActive=false;loadGame(i);}
+      }
+      return;
+    }
+  }
+});
 
 function resumeCurrentScreen() {
   msgEl.textContent='';
@@ -209,6 +296,7 @@ function resumeCurrentScreen() {
   else if(currentScreen==='capy4'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy4,parseInt(speedEl.value));drawCapy4();}
   else if(currentScreen==='capy5'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy5,parseInt(speedEl.value));drawCapy5();}
   else if(currentScreen==='capy7'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy7,120);drawCapy7();}
+  else if(currentScreen==='sloth2'){clearInterval(tickInterval);tickInterval=setInterval(stepSloth2,100);drawSloth2();}
   else if(currentScreen==='capy6'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy6,100);drawCapy6Game();}
   else if(currentScreen==='capy8'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy8,100);drawCapy8Game();}
   else{draw();restartTimer();}

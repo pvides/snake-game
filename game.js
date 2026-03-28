@@ -16,12 +16,15 @@ var storms, stormTimer, lastGoldOrangeEatTime;
 var purpleShieldEnd;
 var currentScreen = 'main';
 var autoSaveInterval;
-const MAX_SAVES = 13;
+const MAX_SAVES = 999;
 var spikeCount = 0;
 var creativeMode = false;
 var creativeMoveQueued = false;
 var rupees = 0;
 var extraLives = 0;
+var ownedPortals = [];
+var happyBeavers = [];
+var happyBeaverCount = 0;
 
 function init() {
   var mid = Math.floor(ROWS / 2);
@@ -33,6 +36,8 @@ function init() {
   spikeCount = 0;
   rupees = 0;
   extraLives = 0;
+  ownedPortals = [];
+  happyBeaverCount = 0;
   gameOver = false;
   running = false;
   scoreEl.textContent = score;
