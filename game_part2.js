@@ -32,7 +32,7 @@ function stepCapy2() {
   capy2Tick++;
   capy2Enemies.forEach(function(e){if(e.type==='raccoon'&&Math.random()>0.79)return;if(Math.random()<0.3)e.dir=DIRS[Math.floor(Math.random()*4)];var nx=e.x+e.dir.x,ny=e.y+e.dir.y;if(nx<0||nx>=COLS||ny<0||ny>=ROWS){e.dir={x:-e.dir.x,y:-e.dir.y};e.x+=e.dir.x;e.y+=e.dir.y;}else{e.x=nx;e.y=ny;}});
   if(capy2Beaver){capy2Enemies.filter(function(e){return e.type==='raccoon';}).forEach(function(e){if(Math.random()<0.5){var dx=Math.sign(capy2Beaver.x-e.x),dy=Math.sign(capy2Beaver.y-e.y);if(Math.abs(capy2Beaver.x-e.x)>=Math.abs(capy2Beaver.y-e.y)){var nx=e.x+dx;if(nx>=0&&nx<COLS)e.x=nx;}else{var ny=e.y+dy;if(ny>=0&&ny<ROWS)e.y=ny;}}});var cb=capy2Enemies.some(function(e){return e.type==='raccoon'&&e.x===capy2Beaver.x&&e.y===capy2Beaver.y;});if(cb)capy2Beaver=null;}
-  if(capy2Beaver){var wombats=capy2Enemies.filter(function(e){return e.type==='wombat';});if(wombats.length>0){var near=null,bd=Infinity;wombats.forEach(function(w){var d=Math.abs(w.x-capy2Beaver.x)+Math.abs(w.y-capy2Beaver.y);if(d<bd){bd=d;near=w;}});if(near){var dx2=Math.sign(near.x-capy2Beaver.x),dy2=Math.sign(near.y-capy2Beaver.y);if(Math.abs(near.x-capy2Beaver.x)>=Math.abs(near.y-capy2Beaver.y))capy2Beaver.x+=dx2;else capy2Beaver.y+=dy2;var ci=capy2Enemies.findIndex(function(e){return e.type==='wombat'&&e.x===capy2Beaver.x&&e.y===capy2Beaver.y;});if(ci!==-1)capy2Enemies.splice(ci,1);}}}
+  if(capy2Beaver){var wombats=capy2Enemies.filter(function(e){return e.type==='wombat';});if(wombats.length>0){var near=null,bd=Infinity;wombats.forEach(function(w){var d=Math.abs(w.x-capy2Beaver.x)+Math.abs(w.y-capy2Beaver.y);if(d<bd){bd=d;near=w;}});if(near){var dx2=Math.sign(near.x-capy2Beaver.x),dy2=Math.sign(near.y-capy2Beaver.y);if(Math.abs(near.x-capy2Beaver.x)>=Math.abs(near.y-capy2Beaver.y))capy2Beaver.x+=dx2;else capy2Beaver.y+=dy2;var ci=capy2Enemies.findIndex(function(e){return e.type==='wombat'&&e.x===capy2Beaver.x&&e.y===capy2Beaver.y;});if(ci!==-1){capy2Enemies.splice(ci,1);totalWombatKills++;}}}}
   var hitR=capy2Enemies.some(function(e){return e.type==='raccoon'&&(snake.some(function(s){return s.x===e.x&&s.y===e.y;})||(head.x===e.x&&head.y===e.y));});
   var hitW=capy2Enemies.some(function(e){return e.type==='wombat'&&(snake.some(function(s){return s.x===e.x&&s.y===e.y;})||(head.x===e.x&&head.y===e.y));});
   if(hitW){if(goldCount<=1)return die();goldCount-=2;score=goldCount;scoreEl.textContent=score;var kl=1+Math.max(1,goldCount);if(snake.length>kl)snake.length=kl;}
@@ -40,12 +40,12 @@ function stepCapy2() {
   snake.unshift(head);
   if((head.x===COLS-1||head.x===COLS-2)&&(head.y===0||head.y===1)&&(capy2Beaver||creativeMode)){enterCapy4();return;}
   var oIdx=capy2Oranges.findIndex(function(o4){return o4.x===head.x&&o4.y===head.y;});
-  if(oIdx!==-1){capy2Oranges.splice(oIdx,1);goldCount++;score=goldCount;scoreEl.textContent=score;if(score>best){best=score;bestEl.textContent=best;}snake.pop();}
+  if(oIdx!==-1){capy2Oranges.splice(oIdx,1);goldCount++;score=goldCount;scoreEl.textContent=score;if(score>best){best=score;bestEl.textContent=best;}dailyOrangesEaten++;snake.pop();}
   else{var gIdx=capy2GoldOranges.findIndex(function(g2){return g2.x===head.x&&g2.y===head.y;});
-    if(gIdx!==-1){capy2GoldOranges.splice(gIdx,1);shooting=true;shootEnd=Date.now()+8340;snake.pop();}
+    if(gIdx!==-1){capy2GoldOranges.splice(gIdx,1);shooting=true;shootEnd=Date.now()+8340;dailyShootsActivated++;snake.pop();}
     else{var cIdx=capy2Capybaras.findIndex(function(c2){return c2.x===head.x&&c2.y===head.y;});if(cIdx!==-1)capy2Capybaras.splice(cIdx,1);else snake.pop();}
   }
-  if(shooting){bullets=[];var h=snake[0];var bx=h.x+dir.x,by=h.y+dir.y;while(bx>=0&&bx<COLS&&by>=0&&by<ROWS){bullets.push({x:bx,y:by});bx+=dir.x;by+=dir.y;}bullets.forEach(function(b){var hi=capy2Enemies.findIndex(function(e){return e.x===b.x&&e.y===b.y;});if(hi!==-1)capy2Enemies.splice(hi,1);});if(Date.now()>=shootEnd){shooting=false;bullets=[];}}
+  if(shooting){bullets=[];var h=snake[0];var bx=h.x+dir.x,by=h.y+dir.y;while(bx>=0&&bx<COLS&&by>=0&&by<ROWS){bullets.push({x:bx,y:by});bx+=dir.x;by+=dir.y;}bullets.forEach(function(b){var hi=capy2Enemies.findIndex(function(e){return e.x===b.x&&e.y===b.y;});if(hi!==-1){var kt=capy2Enemies[hi].type;capy2Enemies.splice(hi,1);if(kt==='raccoon')totalRaccoonKills++;else if(kt==='wombat')totalWombatKills++;}});if(Date.now()>=shootEnd){shooting=false;bullets=[];}}
   drawCapy2();
 }
 
@@ -1843,20 +1843,27 @@ function claimQuest(idx){
 
 function drawQuestSloth(sx,sy){
   var px=sx*GRID+GRID,py=sy*GRID+GRID*1.5;
-  ctx.shadowColor='#e67e22';ctx.shadowBlur=12;
-  ctx.fillStyle='#8a7050';ctx.beginPath();ctx.ellipse(px,py+10,16,22,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#a89070';ctx.beginPath();ctx.ellipse(px,py+14,10,14,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#8a7050';ctx.beginPath();ctx.arc(px,py-14,14,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#5a4030';
+  if(QUESTS.length===0)pickDailyQuests();
+  var hasClaimable=QUESTS.some(function(q){return q.progress()>=q.goal&&claimedQuests.indexOf(q.id)===-1;});
+  var glow=hasClaimable?'#2ecc71':'#e67e22';
+  var fur=hasClaimable?'#4a8a50':'#8a7050';
+  var belly=hasClaimable?'#6aaa70':'#a89070';
+  var patch=hasClaimable?'#2a5a30':'#5a4030';
+  var eye=hasClaimable?'#2ecc71':'#e67e22';
+  ctx.shadowColor=glow;ctx.shadowBlur=12;
+  ctx.fillStyle=fur;ctx.beginPath();ctx.ellipse(px,py+10,16,22,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=belly;ctx.beginPath();ctx.ellipse(px,py+14,10,14,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=fur;ctx.beginPath();ctx.arc(px,py-14,14,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=patch;
   ctx.beginPath();ctx.ellipse(px-6,py-14,6,5,0,0,Math.PI*2);ctx.fill();
   ctx.beginPath();ctx.ellipse(px+6,py-14,6,5,0,0,Math.PI*2);ctx.fill();
-  ctx.fillStyle='#e67e22';
+  ctx.fillStyle=eye;
   ctx.beginPath();ctx.ellipse(px-6,py-14,3,1.5,0,0,Math.PI*2);ctx.fill();
   ctx.beginPath();ctx.ellipse(px+6,py-14,3,1.5,0,0,Math.PI*2);ctx.fill();
   ctx.fillStyle='#3a2a1a';ctx.beginPath();ctx.arc(px,py-9,2.5,0,Math.PI*2);ctx.fill();
-  ctx.strokeStyle='#5a4030';ctx.lineWidth=1.2;
+  ctx.strokeStyle=patch;ctx.lineWidth=1.2;
   ctx.beginPath();ctx.arc(px,py-5,4,0.1*Math.PI,0.9*Math.PI);ctx.stroke();
-  ctx.strokeStyle='#8a7050';ctx.lineWidth=5;
+  ctx.strokeStyle=fur;ctx.lineWidth=5;
   ctx.beginPath();ctx.moveTo(px-14,py+2);ctx.quadraticCurveTo(px-26,py-8,px-22,py-18);ctx.stroke();
   ctx.beginPath();ctx.moveTo(px+14,py+2);ctx.quadraticCurveTo(px+26,py-8,px+22,py-18);ctx.stroke();
   ctx.strokeStyle='#4a3a2a';ctx.lineWidth=1.5;
@@ -1865,7 +1872,7 @@ function drawQuestSloth(sx,sy){
   ctx.beginPath();ctx.moveTo(px+22,py-18);ctx.lineTo(px+25,py-22);ctx.stroke();
   ctx.beginPath();ctx.moveTo(px+22,py-18);ctx.lineTo(px+19,py-22);ctx.stroke();
   ctx.shadowBlur=0;
-  ctx.fillStyle='#e67e22';ctx.font='bold 9px Segoe UI';ctx.textAlign='center';
+  ctx.fillStyle=glow;ctx.font='bold 9px Segoe UI';ctx.textAlign='center';
   ctx.fillText('QUESTS',px,py-30);
 }
 
