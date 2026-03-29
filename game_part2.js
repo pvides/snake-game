@@ -113,7 +113,7 @@ function startAutoSave(){if(autoSaveInterval)clearInterval(autoSaveInterval);aut
 
 // === CUTSCENE ===
 var cutsceneActive=false,cutsceneFrame=0,cutsceneTimer2=null,cutsceneCallback=null;
-var CUTSCENE_SCENES=[{duration:3000,draw:drawScene1},{duration:3000,draw:drawScene2},{duration:2500,draw:drawScene3},{duration:2500,draw:drawScene4},{duration:2500,draw:drawScene5},{duration:2000,draw:drawScene6},{duration:1500,draw:drawScene7}];
+var CUTSCENE_SCENES=[{duration:6000,draw:drawScene1},{duration:6000,draw:drawScene2},{duration:5000,draw:drawScene3},{duration:5000,draw:drawScene4},{duration:5000,draw:drawScene5},{duration:4000,draw:drawScene6},{duration:3000,draw:drawScene7}];
 function startCutscene(callback){cutsceneActive=true;cutsceneFrame=0;cutsceneCallback=callback;menuActive=false;playCutsceneFrame();}
 function playCutsceneFrame(){if(!cutsceneActive)return;if(cutsceneFrame>=CUTSCENE_SCENES.length){cutsceneActive=false;if(cutsceneCallback)cutsceneCallback();return;}var scene=CUTSCENE_SCENES[cutsceneFrame];scene.draw();ctx.fillStyle='#555';ctx.font='12px Segoe UI';ctx.textAlign='right';ctx.fillText('Press X to skip',canvas.width-10,canvas.height-10);cutsceneTimer2=setTimeout(function(){cutsceneFrame++;playCutsceneFrame();},scene.duration);}
 function skipCutscene(){if(!cutsceneActive)return;cutsceneActive=false;if(cutsceneTimer2)clearTimeout(cutsceneTimer2);if(cutsceneCallback)cutsceneCallback();}
@@ -610,9 +610,9 @@ function stepCapy6(){
   if(currentScreen!=='capy6')return;
   if(capy6CutsceneActive){
     capy6CutsceneFrame++;
-    if(capy6CutsceneFrame<60)capy6KnightX=capy6CutsceneFrame*3;
+    if(capy6CutsceneFrame<120)capy6KnightX=capy6CutsceneFrame*1.5;
     drawCastleCutscene(capy6KnightX,capy6CutsceneFrame,'Sloth 1');
-    if(capy6CutsceneFrame>=120){capy6CutsceneActive=false;startCapy6();}
+    if(capy6CutsceneFrame>=240){capy6CutsceneActive=false;startCapy6();}
     return;
   }
   if(!capy6Running||!capy6MoveQueued){drawCapy6Game();return;}
@@ -668,9 +668,9 @@ function stepCapy8(){
   if(currentScreen!=='capy8')return;
   if(capy8CutsceneActive){
     capy8CutsceneFrame++;
-    if(capy8CutsceneFrame<60)capy8KnightX=capy8CutsceneFrame*3;
+    if(capy8CutsceneFrame<120)capy8KnightX=capy8CutsceneFrame*1.5;
     drawCastleCutscene(capy8KnightX,capy8CutsceneFrame,'Sloth 3');
-    if(capy8CutsceneFrame>=120){capy8CutsceneActive=false;startCapy8();}
+    if(capy8CutsceneFrame>=240){capy8CutsceneActive=false;startCapy8();}
     return;
   }
   if(!capy8Running||!capy8MoveQueued){drawCapy8Game();return;}
@@ -814,7 +814,7 @@ function drawCastleCutscene(knightX,frame,title){
   ctx.shadowColor='#9b59b6';ctx.shadowBlur=10;ctx.strokeStyle='rgba(155,89,182,0.2)';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(kx+25,ky+2,20,16,0,0,Math.PI*2);ctx.stroke();ctx.shadowBlur=0;
   // Text
   ctx.fillStyle='#2c3e50';ctx.font='bold 16px Segoe UI';ctx.textAlign='center';
-  if(frame<60){ctx.fillText('The knight reaches the castle...',canvas.width/2,30);}
+  if(frame<120){ctx.fillText('The knight reaches the castle...',canvas.width/2,30);}
   else{
     ctx.fillText('"I will wait here for my fellow knights."',canvas.width/2,30);
     // Speech bubble
@@ -935,9 +935,9 @@ function stepCapy7(){
 
 function stepCapy7Cutscene(){
   capy7CutsceneFrame++;
-  if(capy7CutsceneFrame<60){capy7KnightX=capy7CutsceneFrame*3;}
+  if(capy7CutsceneFrame<120){capy7KnightX=capy7CutsceneFrame*1.5;}
   drawCapy7Cutscene();
-  if(capy7CutsceneFrame>=120){clearInterval(tickInterval);enterSloth2();}
+  if(capy7CutsceneFrame>=240){clearInterval(tickInterval);enterSloth2();}
 }
 
 function drawCapy7(){
@@ -1014,7 +1014,7 @@ function drawCapy7Cutscene(){
   ctx.strokeStyle='#9a8aba';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(kx+20,canvas.height*0.38,12,0,Math.PI*2);ctx.stroke();
   // Text
   ctx.fillStyle='#2c3e50';ctx.font='bold 16px Segoe UI';ctx.textAlign='center';
-  if(capy7CutsceneFrame<60){
+  if(capy7CutsceneFrame<120){
     ctx.fillText('The knight reaches the castle...',canvas.width/2,40);
   }else{
     ctx.fillText('"I will wait here for my fellow knights."',canvas.width/2,40);
