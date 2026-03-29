@@ -603,7 +603,7 @@ function enterCapy6(){
   if(!mainGameState)mainGameState=getGameState();
   currentScreen='capy6';clearInterval(tickInterval);
   capy6CutsceneActive=true;capy6CutsceneFrame=0;capy6KnightX=0;capy6Running=false;capy6MoveQueued=false;
-  tickInterval=setInterval(stepCapy6,100);
+  tickInterval=setInterval(stepCapy6,parseInt(speedEl.value));
 }
 
 function stepCapy6(){
@@ -661,7 +661,7 @@ function enterCapy8(){
   if(!mainGameState)mainGameState=getGameState();
   currentScreen='capy8';clearInterval(tickInterval);
   capy8CutsceneActive=true;capy8CutsceneFrame=0;capy8KnightX=0;capy8Running=false;capy8MoveQueued=false;
-  tickInterval=setInterval(stepCapy8,100);
+  tickInterval=setInterval(stepCapy8,parseInt(speedEl.value));
 }
 
 function stepCapy8(){
@@ -839,7 +839,7 @@ function enterSloth2(){
   sloth2QuestSloth={x:COLS-5,y:1};
   for(var si=0;si<7;si++){var sx,sy;do{sx=2+Math.floor(Math.random()*(COLS-4));sy=2+Math.floor(Math.random()*(ROWS-4));}while(sx===sloth2Player.x&&sy===sloth2Player.y||sloth2Merchants.some(function(m){return m.x===sx&&m.y===sy;})||(sx>=sloth2QuestSloth.x&&sx<=sloth2QuestSloth.x+1&&sy>=sloth2QuestSloth.y&&sy<=sloth2QuestSloth.y+2));sloth2Merchants.push({x:sx,y:sy,discount:si===0,purple:si===1,blue:si===3,yellow:si===4,orange:si===5,scam:si===6});}
   var rsx3,rsy3;do{rsx3=2+Math.floor(Math.random()*(COLS-4));rsy3=2+Math.floor(Math.random()*(ROWS-4));}while(rsx3===sloth2Player.x&&rsy3===sloth2Player.y||sloth2Merchants.some(function(m){return m.x===rsx3&&m.y===rsy3;})||(rsx3>=sloth2QuestSloth.x&&rsx3<=sloth2QuestSloth.x+1&&rsy3>=sloth2QuestSloth.y&&rsy3<=sloth2QuestSloth.y+2));sloth2RedSloth={x:rsx3,y:rsy3};
-  tickInterval=setInterval(stepSloth2,100);
+  tickInterval=setInterval(stepSloth2,parseInt(speedEl.value));
   drawSloth2();msgEl.textContent='Sloth 2 — Arrow keys to move, ESC to return';
 }
 
@@ -901,7 +901,7 @@ function enterCapy7(){
       capy7Logs.push({x:li*(logLen+2+Math.random()*2),y:row,len:logLen,speed:speed});
     }
   }
-  tickInterval=setInterval(stepCapy7,120);
+  tickInterval=setInterval(stepCapy7,parseInt(speedEl.value));
   drawCapy7();msgEl.textContent='Capy 7 — Cross the ocean!';
 }
 

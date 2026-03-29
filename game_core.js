@@ -302,10 +302,10 @@ function resumeCurrentScreen() {
   else if(currentScreen==='capy3'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy3,parseInt(speedEl.value));drawCapy3();}
   else if(currentScreen==='capy4'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy4,parseInt(speedEl.value));drawCapy4();}
   else if(currentScreen==='capy5'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy5,parseInt(speedEl.value));drawCapy5();}
-  else if(currentScreen==='capy7'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy7,120);drawCapy7();}
-  else if(currentScreen==='sloth2'){clearInterval(tickInterval);tickInterval=setInterval(stepSloth2,100);drawSloth2();}
-  else if(currentScreen==='capy6'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy6,100);drawCapy6Game();}
-  else if(currentScreen==='capy8'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy8,100);drawCapy8Game();}
+  else if(currentScreen==='capy7'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy7,parseInt(speedEl.value));drawCapy7();}
+  else if(currentScreen==='sloth2'){clearInterval(tickInterval);tickInterval=setInterval(stepSloth2,parseInt(speedEl.value));drawSloth2();}
+  else if(currentScreen==='capy6'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy6,parseInt(speedEl.value));drawCapy6Game();}
+  else if(currentScreen==='capy8'){clearInterval(tickInterval);tickInterval=setInterval(stepCapy8,parseInt(speedEl.value));drawCapy8Game();}
   else{draw();restartTimer();}
 }
 
